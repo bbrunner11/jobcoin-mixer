@@ -18,6 +18,7 @@ case object Error
 
 class RequestHandler extends Actor with ActorLogging {
 
+  var incInt = 0 //increment int for mixer addresses
 
   def receive: Receive = {
 
@@ -27,8 +28,8 @@ class RequestHandler extends Actor with ActorLogging {
 //        if(getAllJobCoinTransactions.code != 200) Error else Response(getAllJobCoinTransactions.body)
 //      }
     case moa: MixerOutAccounts => {
-      context.actorOf(MixerService.props()) ! moa
-      sender ! Response("Sent OutAccounts to Mixer")
+      context.actorOf(MixerService.props()) ! moa //TODO send a MixThis class which includes the incInt as part of the mixer in address
+      sender ! Response("Sent your info to the Mixer.  Thanks")
     }
     case Request => {
       println("got here")

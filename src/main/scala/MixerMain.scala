@@ -14,7 +14,7 @@ import spray.json._
 import scala.io.StdIn
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val accounts = jsonFormat1(MixerOutAccounts) // contains List[String]
+  implicit val accounts = jsonFormat2(MixerOutAccounts) // contains List[String]
 }
 
 object MixerMain extends JsonSupport {
