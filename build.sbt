@@ -20,3 +20,7 @@ lazy val root = (project in file(".")).
   )
 libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.3.0"
 libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+
+homepage := Some(url("https://github.com/bbrunner11/jobcoin-mixer"))
+
+licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
