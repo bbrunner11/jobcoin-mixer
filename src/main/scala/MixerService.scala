@@ -15,8 +15,8 @@ case class MixerResponse(payload: String)
 class MixerService extends Actor with ActorLogging {
 
   def receive: Receive = {
-    case MixThis => log.info("MixThis: got here")
-    case moa: MixerOutAccounts => {log.info(s"\nPrimary Account: ${moa.primaryAccount}\n\tMixerOutAccounts: ${moa.accounts.toString}")}
+    case mt: MixThis => log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tMixerOutAccounts: ${mt.outAddresses.mkString(",")}")
+    case moa: MixerOutAccounts => log.info(s"\nPrimary Account: ${moa.primaryAccount}\n\tMixerOutAccounts: ${moa.accounts.toString}")
     case _ => log.info("whatever")
   }
 
