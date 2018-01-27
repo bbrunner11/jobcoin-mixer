@@ -17,10 +17,13 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val accounts = jsonFormat2(MixerOutAccounts) // contains List[String]
 }
 
+
 object MixerMain extends JsonSupport {
 
   val host = "localhost"
   val port = 8080
+
+  val primaryToMixerIn = scala.collection.concurrent.TrieMap[String, String]()
 
   def main(args: Array[String]): Unit = {
 
@@ -35,10 +38,11 @@ object MixerMain extends JsonSupport {
 
       implicit val timeout = Timeout(20.seconds)
 
-      path("api") {
+      path("api" / "mixme") {
         get {
           complete(StatusCodes.OK, "Everything is great!")
-        } ~
+        }
+      } ~
         post {
           entity(as[MixerOutAccounts]) { mixerOut =>
             onSuccess(requestHandler ? mixerOut) {
@@ -48,42 +52,43 @@ object MixerMain extends JsonSupport {
               case _ =>
                 complete(StatusCodes.InternalServerError)
             }
-              //TODO need a failure directive here
+            //TODO need a failure directive here
           }
+
         }
-        //}
-      }
-
-
-
-
-      //      path("transactions") {
-      //        get {
-      //          onSuccess(requestHandler ? GetTransactions) {
-      //            case response: Response =>
-      //              complete(StatusCodes.OK, response.payload)
-      //            case _ =>
-      //              complete(StatusCodes.InternalServerError)
-      //          }
-      //        }
-      //      }
-      //
-      //      path("startmixer") {
-      //
-      //        post {
-      //          entity(as[MixerOutAccounts]) { mixerOut =>
-      //            onSuccess(requestHandler ? mixerOut) {
-      //              case response: Response => {
-      //               // mixerService ! mixerOut //start mixer, TODO check for Success??
-      //                complete(StatusCodes.OK, response.payload)
-      //              }
-      //              case _ =>
-      //                complete(StatusCodes.InternalServerError)
-      //            }
-      //          }
-      //        }
-      //      }
+      //}
     }
+
+
+
+
+    //      path("transactions") {
+    //        get {
+    //          onSuccess(requestHandler ? GetTransactions) {
+    //            case response: Response =>
+    //              complete(StatusCodes.OK, response.payload)
+    //            case _ =>
+    //              complete(StatusCodes.InternalServerError)
+    //          }
+    //        }
+    //      }
+    //
+    //      path("startmixer") {
+    //
+    //        post {
+    //          entity(as[MixerOutAccounts]) { mixerOut =>
+    //            onSuccess(requestHandler ? mixerOut) {
+    //              case response: Response => {
+    //               // mixerService ! mixerOut //start mixer, TODO check for Success??
+    //                complete(StatusCodes.OK, response.payload)
+    //              }
+    //              case _ =>
+    //                complete(StatusCodes.InternalServerError)
+    //            }
+    //          }
+    //        }
+    //      }
+
 
     //Startup, and listen for requests
     val bindingFuture = Http().bindAndHandle(route, host, port)
