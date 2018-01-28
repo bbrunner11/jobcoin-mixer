@@ -14,7 +14,7 @@ object RequestHandler {
 case class Request(request: String)
 case object GetTransactions
 case class Response(payload: String)
-case object Error
+case class Error(error: String)
 
 class RequestHandler extends Actor with ActorLogging {
 
@@ -39,9 +39,9 @@ class RequestHandler extends Actor with ActorLogging {
           sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
         }
         case r if(r.code) == 422 => {
-          sender ! Response(s"Error. Insufficient funds.")
+          sender ! Error(s"Error. Insufficient funds.")
         }
-        case _ => sender ! Error
+        case _ => sender ! Error("Something went wrong")
       }
 
     }

@@ -52,6 +52,9 @@ object MixerMain extends JsonSupport {
                 case response: Response => {
                   complete(StatusCodes.OK, response.payload)
                 }
+                case err: Error => {
+                  complete(StatusCodes.OK, err.error)
+                }
                 case _ =>
                   complete(StatusCodes.InternalServerError)
               }
@@ -59,12 +62,15 @@ object MixerMain extends JsonSupport {
             }
           }
         } ~
-        path("api" / "sendfunds") {
+        path("api" / "mixfunds") {
           post {
             entity(as[MixThis]) { mixThis =>
               onSuccess(requestHandler ? mixThis) {
                 case response: Response => {
                   complete(StatusCodes.OK, response.payload)
+                }
+                case err: Error => {
+                  complete(StatusCodes.OK, err.error)
                 }
                 case _ => complete(StatusCodes.InternalServerError)
               }
