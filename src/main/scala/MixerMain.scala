@@ -25,6 +25,7 @@ object MixerMain extends JsonSupport {
   val port = 8080
 
   val primaryToMixerIn = scala.collection.concurrent.TrieMap[String, String]()
+  val primaryToMixerOut = scala.collection.concurrent.TrieMap[String, Seq[String]]()
 
   def main(args: Array[String]): Unit = {
 
