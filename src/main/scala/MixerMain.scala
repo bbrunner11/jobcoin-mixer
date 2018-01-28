@@ -14,7 +14,8 @@ import spray.json._
 import scala.io.StdIn
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val accounts = jsonFormat2(MixerOutAccounts) // contains List[String]
+  implicit val outAccounts = jsonFormat2(MixerOutAccounts) // MixerOutAccounts[String, List[String])
+  implicit val mixThis = jsonFormat3(MixThis) // MixThis(String, String, String)
 }
 
 
@@ -38,28 +39,40 @@ object MixerMain extends JsonSupport {
 
       implicit val timeout = Timeout(20.seconds)
 
-      path("api" / "mixme") {
+      path("api" / "health") {
         get {
           complete(StatusCodes.OK, "Everything is great!")
         }
       } ~
-        post {
-          entity(as[MixerOutAccounts]) { mixerOut =>
-            onSuccess(requestHandler ? mixerOut) {
-              case response: Response => {
-                complete(StatusCodes.OK, response.payload)
+        path("api" / "startmixer") {
+          post {
+            entity(as[MixerOutAccounts]) { mixerOut =>
+              onSuccess(requestHandler ? mixerOut) {
+                case response: Response => {
+                  complete(StatusCodes.OK, response.payload)
+                }
+                case _ =>
+                  complete(StatusCodes.InternalServerError)
               }
-              case _ =>
-                complete(StatusCodes.InternalServerError)
+              //TODO need a failure directive here
             }
-            //TODO need a failure directive here
           }
-
+        } ~
+        path("api" / "sendfunds") {
+          post {
+            entity(as[MixThis]) { mixThis =>
+              onSuccess(requestHandler ? mixThis) {
+                case response: Response => {
+                  complete(StatusCodes.OK, response.payload)
+                }
+                case _ => complete(StatusCodes.InternalServerError)
+              }
+            }
+          }
         }
-      //}
+
+
     }
-
-
 
 
     //      path("transactions") {

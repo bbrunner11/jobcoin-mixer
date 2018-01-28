@@ -27,9 +27,14 @@ class RequestHandler extends Actor with ActorLogging {
 //      sender() ! {
 //        if(getAllJobCoinTransactions.code != 200) Error else Response(getAllJobCoinTransactions.body)
 //      }
-    case moa: MixerOutAccounts => {  //TODO generate a dummyMixer account and pass it along
-      context.actorOf(MixerService.props()) ! MixThis(moa.primaryAccount, "dummyMixer1", moa.accounts) //TODO send a MixThis class which includes the incInt as part of the mixer in address
+    //TODO generate a dummyMixer account and pass it along to both mixer calls
+    case moa: MixerOutAccounts => {
+      context.actorOf(MixerService.props()) ! MixerOutAccounts(moa.primaryAccount, moa.accounts)
       sender ! Response(s"Sent your info to the Mixer.  Your mixer address is dummyMixer1.  Please send funds to be mixed to that address. Thanks")
+    }
+    case mt: MixThis => {
+      context.actorOf(MixerService.props()) ! MixThis(mt.fromAddress, "dummyMixer1", mt.amount) //TODO send a MixThis class which includes the incInt as part of the mixer in address
+      sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
     }
     case Request => {
       println("got here")

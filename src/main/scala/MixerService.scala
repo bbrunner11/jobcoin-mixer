@@ -8,7 +8,7 @@ object MixerService {
     Props(classOf[MixerService])
   }
 }
-case class MixThis(fromAddress: String, mixerAddress: String, outAddresses: List[String])
+case class MixThis(fromAddress: String, mixerAddress: String, amount: String)
 case class MixerOutAccounts(primaryAccount: String, accounts: List[String])
 case class MixerResponse(payload: String)
 
@@ -18,7 +18,7 @@ case class MixerResponse(payload: String)
 class MixerService extends Actor with ActorLogging {
 
   def receive: Receive = {
-    case mt: MixThis => primaryToMixerIn.update(mt.fromAddress, "test"); log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tMixerOutAccounts: ${mt.outAddresses.mkString(",")}\n$primaryToMixerIn")
+    case mt: MixThis => log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
     case moa: MixerOutAccounts => log.info(s"\nPrimary Account: ${moa.primaryAccount}\n\tMixerOutAccounts: ${moa.accounts.toString}")
     case _ => log.info("whatever")
   }
