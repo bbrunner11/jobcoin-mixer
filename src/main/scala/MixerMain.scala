@@ -8,13 +8,15 @@ import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import akka.pattern.ask
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import akka.http.scaladsl.marshallers.sprayjson._
 import spray.json._
+
 import scala.io.StdIn
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val outAccounts = jsonFormat2(MixerOutAccounts) // MixerOutAccounts[String, List[String])
+  implicit val outAccounts = jsonFormat2(MixerOutAddresses) // MixerOutAccounts[String, List[String])
   implicit val mixThis = jsonFormat3(MixThis) // MixThis(String, String, String)
 }
 
@@ -35,6 +37,8 @@ object MixerMain extends JsonSupport {
 
     val requestHandler = system.actorOf(RequestHandler.props(), "requestHandler")
 
+    val txPoller = system.actorOf(TxLogPoller.props(), "txPoller") //start another child actor to poll the tx logs
+
     //Define the route
     val route: Route = {
 
@@ -47,7 +51,7 @@ object MixerMain extends JsonSupport {
       } ~
         path("api" / "startmixer") {
           post {
-            entity(as[MixerOutAccounts]) { mixerOut =>
+            entity(as[MixerOutAddresses]) { mixerOut =>
               onSuccess(requestHandler ? mixerOut) {
                 case response: Response => {
                   complete(StatusCodes.OK, response.payload)
@@ -81,43 +85,21 @@ object MixerMain extends JsonSupport {
 
     }
 
-
-    //      path("transactions") {
-    //        get {
-    //          onSuccess(requestHandler ? GetTransactions) {
-    //            case response: Response =>
-    //              complete(StatusCodes.OK, response.payload)
-    //            case _ =>
-    //              complete(StatusCodes.InternalServerError)
-    //          }
-    //        }
-    //      }
-    //
-    //      path("startmixer") {
-    //
-    //        post {
-    //          entity(as[MixerOutAccounts]) { mixerOut =>
-    //            onSuccess(requestHandler ? mixerOut) {
-    //              case response: Response => {
-    //               // mixerService ! mixerOut //start mixer, TODO check for Success??
-    //                complete(StatusCodes.OK, response.payload)
-    //              }
-    //              case _ =>
-    //                complete(StatusCodes.InternalServerError)
-    //            }
-    //          }
-    //        }
-    //      }
-
-
     //Startup, and listen for requests
     val bindingFuture = Http().bindAndHandle(route, host, port)
-    println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
-    StdIn.readLine()
 
-    //Shutdown
-    bindingFuture.flatMap(_.unbind())
-    system.terminate()
+    //set up a transaction polling schedule
+    val cancellable = system.scheduler.schedule(0 milliseconds, 1000 milliseconds, txPoller, "poll")
+
+    println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
+
+      StdIn.readLine()
+
+      //Shutdown
+      bindingFuture.flatMap(_.unbind())
+      cancellable.cancel
+      system.terminate()
+
   }
 
 }

@@ -3,6 +3,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions._
+import bb.mixer.MixerMain.{primaryToMixerOut}
 
 
 object RequestHandler {
@@ -28,21 +29,29 @@ class RequestHandler extends Actor with ActorLogging {
 //        if(getAllJobCoinTransactions.code != 200) Error else Response(getAllJobCoinTransactions.body)
 //      }
     //TODO generate a dummyMixer account and pass it along to both mixer calls
-    case moa: MixerOutAccounts => {
-      context.actorOf(MixerService.props()) ! MixerOutAccounts(moa.primaryAccount, moa.accounts)
+    case moa: MixerOutAddresses => {
+      context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.primaryAddress, moa.addresses)
       sender ! Response(s"Sent your info to the Mixer.  Your mixer address is dummyMixer1.  Please send funds to be mixed to that address. Thanks")
     }
     case mt: MixThis => {
-      sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match {
-        case r if(r.code) == 200 => {
-          context.actorOf(MixerService.props()) ! MixThis(mt.fromAddress, "dummyMixer1", mt.amount) //TODO send a MixThis class which includes the incInt as part of the mixer in address
-          sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
+      primaryToMixerOut.get(mt.fromAddress) match { //check that the user has notified mixer of out addresses
+        case Some(_) => {
+          sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match {
+            case r if(r.code) == 200 => {
+              context.actorOf(MixerService.props()) ! MixThis(mt.fromAddress, "dummyMixer1", mt.amount) //TODO send a MixThis class which includes the incInt as part of the mixer in address
+              sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
+            }
+            case r if(r.code) == 422 => {
+              sender ! Error(s"Error. Insufficient funds.")
+            }
+            case _ => sender ! Error("Something went wrong.")
+          }
         }
-        case r if(r.code) == 422 => {
-          sender ! Error(s"Error. Insufficient funds.")
+        case None => {
+          sender ! Error(s"You have not notified the mixer of the alternate addresses to use in the mix.")
         }
-        case _ => sender ! Error("Something went wrong")
       }
+
 
     }
     case Request => {
