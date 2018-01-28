@@ -1,6 +1,7 @@
 package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
+import bb.mixer.HttpTransactions.sendJobCoinTransaction
 import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut}
 
 object MixerService {
@@ -11,9 +12,6 @@ object MixerService {
 case class MixThis(fromAddress: String, mixerAddress: String, amount: String)
 case class MixerOutAddresses(primaryAddress: String, addresses: Seq[String])
 case class MixerResponse(payload: String)
-
-
-
 
 class MixerService extends Actor with ActorLogging {
 
@@ -46,11 +44,13 @@ class MixerService extends Actor with ActorLogging {
       val out = randInt.nextInt(addressesOut.size)
 
 
-      if (amount == 0 || iter == 10)
+      if (amount == 0 || iter == 10) {
         log.info(s"balance $amount sent to ${addressesOut(out)}\n") //send balance to out accts
+        sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, amount.toString)
+      }
       else {
         log.info(s"random $combined sent to ${addressesOut(out)}\n") //send random amount to out accts
-
+        sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, combined.toString)
       }
       amount -= combined
 

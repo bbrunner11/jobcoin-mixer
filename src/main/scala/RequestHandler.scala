@@ -36,7 +36,7 @@ class RequestHandler extends Actor with ActorLogging {
     case mt: MixThis => {
       primaryToMixerOut.get(mt.fromAddress) match { //check that the user has notified mixer of out addresses
         case Some(_) => {
-          sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match {
+          sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
             case r if(r.code) == 200 => {
               context.actorOf(MixerService.props()) ! MixThis(mt.fromAddress, "dummyMixer1", mt.amount) //TODO send a MixThis class which includes the incInt as part of the mixer in address
               sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
