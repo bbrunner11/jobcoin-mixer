@@ -3,7 +3,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions._
-import bb.mixer.MixerMain.{primaryToMixerOut, primaryToLastActivity}
+import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut, primaryToLastActivity}
 
 object RequestHandler {
   def props(): Props = {
@@ -12,22 +12,15 @@ object RequestHandler {
 }
 
 case class Request(request: String)
-case object GetTransactions
 case class Response(payload: String)
 case class Error(error: String)
 
 class RequestHandler extends Actor with ActorLogging {
 
-  var incInt = 0 //increment int for mixer addresses
+  var incMixer = 0 //increment int for mixer addresses
 
   def receive: Receive = {
 
-//    case GetTransactions =>
-//      log.debug("Received Tx Request")
-//      sender() ! {
-//        if(getAllJobCoinTransactions.code != 200) Error else Response(getAllJobCoinTransactions.body)
-//      }
-    //TODO generate a dummyMixer account and pass it along to both mixer calls
     case moa: MixerOutAddresses => {
       primaryToMixerOut.get(moa.fromAddress) match {
         case Some(_) => {
@@ -36,17 +29,17 @@ class RequestHandler extends Actor with ActorLogging {
         case None => {
           context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses)
           primaryToLastActivity.update(moa.fromAddress, java.util.Calendar.getInstance.getTime) //init first time user has used the mixer
-          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is 'dummyMixer1'.  Please send funds to be mixed to that address. Thanks")
+          primaryToMixerIn.update(moa.fromAddress, s"mixerIn${incMixer += 1}") //increment mixer address by 1 per valid mix request
+          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is 'mixerIn$incMixer'.  Please send funds to be mixed to that address. Thanks")
         }
        }
-
     }
     case mt: MixThis => {
       primaryToMixerOut.get(mt.fromAddress) match { //check that the user has notified mixer of out addresses
         case Some(_) => {
           sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
             case r if(r.code) == 200 => {
-              context.actorOf(MixerService.props()) ! MixThis(mt.fromAddress, "dummyMixer1", mt.amount) //TODO send a MixThis class which includes the incInt as part of the mixer in address
+              context.actorOf(MixerService.props()) ! MixThis(mt.fromAddress, mt.mixerAddress, mt.amount)
               sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
             }
             case r if(r.code) == 422 => {

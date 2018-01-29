@@ -24,7 +24,7 @@ class MixerService extends Actor with ActorLogging {
   }
 
   def storeOutAccounts( moa: MixerOutAddresses): Unit = {
-    primaryToMixerOut.update(moa.fromAddress, moa.addresses) //TODO need to grow accounts list if key already exists
+    primaryToMixerOut.update(moa.fromAddress, moa.addresses) //right now, 1 unique address is assigned to a predegined set of out addresses, so overwriting on update is not a big deal right now
     log.info(primaryToMixerOut.toString)
   }
 
