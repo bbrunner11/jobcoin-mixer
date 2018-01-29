@@ -4,7 +4,7 @@ package bb.mixer
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import bb.mixer.HttpTransactions._
-import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut, primaryToLastActivity}
+import bb.mixer.MixerMain.{mixerInToAddressIn, primaryToMixerIn, primaryToMixerOut, primaryToLastActivity}
 import spray.json._
 import java.util.Date
 import java.util.Calendar
@@ -51,19 +51,38 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
       * filter out any transactions prior to the initial call to /startmixer or the last run of the poller
       * move fromAddress, toAddress and balance to the same level to make it easier to filter later
       */
-    val allTransactionsPerUser = primaryToMixerOut.keys.map(x => getJobCoinTransactionsFor(x)).toList.map(r => parseResponse(r))
-      .map(txs => {
-        val validTransactions = txs.transactions.filter(f => f.fromAddress.isDefined && parseTimestamp(f.timestamp).compareTo(primaryToLastActivity(f.fromAddress.get)) >= 0)
-          .map(ft => FlattenedTransactions(ft.fromAddress.get, ft.toAddress, ft.timestamp, ft.amount))
+    //    val allTransactionsPerUser = primaryToMixerOut.keys.map(x => getJobCoinTransactionsFor(x)).toList.map(r => parseResponse(r))
+    //      .map(txs => {
+    //        val validTransactions = txs.transactions.filter(f => f.fromAddress.isDefined && parseTimestamp(f.timestamp).compareTo(primaryToLastActivity(f.fromAddress.get)) >= 0)
+    //          .map(ft => FlattenedTransactions(ft.fromAddress.get, ft.toAddress, ft.timestamp, ft.amount))
+    //
+    //        validTransactions//.filter(mixed => primaryToMixerIn.keySet.exists(_ == mixed.toAddress))
+    //      }).flatten
 
-        validTransactions//.filter(mixed => primaryToMixerIn.keySet.exists(_ == mixed.toAddress))
-      }).flatten
 
-    //TODO QUERY THE MIXER ACCOUNTS(  based on primaryToMixerIn values), CHECK FOR BALANCE, roll them up to the primary, AND DISTRIBUTE
+
+//    val allMixerAddresses = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r))
+//      .map(tx => (tx.balance, tx.transactions.find(_.fromAddress.isDefined) match {
+//        case Some(from) => from.fromAddress.get //get ok here due to previous isDefined and pattern match
+//        case None => "house account"
+//      }))
+
+    //TODO need to do proper string to number casting and error handling at some point!!!
+    mixerInToAddressIn.update("test1", "test2")
+
+    /**
+      * Get all transactions for known mixers that do not have a zero balance. If we know there's a balance at a mixer address when this runs,
+      * the timeStamp is irrelevant, the balance should be mixed and distributed to whoever is assigned to that mixer address
+      *
+      * Partition by the fromAddress, since if it's a mixer address with no fromAddress, the house gets to keep it :)
+      * Filter the transactions where a fromAddress is defined but is also a mixer address since we don't care about mixer outgoing transactions
+      */
+    val allMixerAddresses = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance != "0")
+        .map(x => x.transactions.partition(_.fromAddress.isDefined)).map(m => (m._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)), m._2))
     //OwnerTransactions(validTransactions.head.fromAddress.get, txs.balance, validTransactions.head.fromAddress.get, validTransactions)
     //}).filter(ot => ot.toAccount == primaryToMixerIn.get(ot.owner))
 
-    println(allTransactionsPerUser)
+    println(allMixerAddresses.mkString("\n"))
 
 
     //val zz = allTransactionsPerUser.map(txs => OwnerTransactions(txs.transactions.head.fromAddress.get, txs.balance, txs.transactions))

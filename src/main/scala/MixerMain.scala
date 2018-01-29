@@ -29,7 +29,7 @@ object MixerMain extends JsonSupport {
   val primaryToMixerIn = scala.collection.concurrent.TrieMap[String, String]()
   val primaryToMixerOut = scala.collection.concurrent.TrieMap[String, Seq[String]]()
   val primaryToLastActivity = scala.collection.concurrent.TrieMap[String, java.util.Date]()
-
+  val mixerInToAddressIn = scala.collection.concurrent.TrieMap[String, String]()
 
   def main(args: Array[String]): Unit = {
 
@@ -91,7 +91,7 @@ object MixerMain extends JsonSupport {
     val bindingFuture = Http().bindAndHandle(route, host, port)
 
     //set up a transaction polling schedule
-    val cancellable = system.scheduler.schedule(0 milliseconds, 5000 milliseconds, txPoller, "poll")
+    val cancellable = system.scheduler.schedule(0 milliseconds, 5000 milliseconds, txPoller, "poll") //TODO make this a Runnable and send a message so threads are queued??
 
     println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
 
