@@ -3,7 +3,6 @@ package bb.mixer
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions.sendJobCoinTransaction
 import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut}
-import bb.mixer.HttpTransactions._
 
 object MixerService {
   def props(): Props = {
@@ -11,7 +10,7 @@ object MixerService {
   }
 }
 case class MixThis(fromAddress: String, mixerAddress: String, amount: String)
-case class MixerOutAddresses(primaryAddress: String, addresses: Seq[String])
+case class MixerOutAddresses(fromAddress: String, addresses: Seq[String])
 case class MixerResponse(payload: String)
 
 class MixerService extends Actor with ActorLogging {
@@ -20,12 +19,12 @@ class MixerService extends Actor with ActorLogging {
     case mt: MixThis => {
       val response = log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
     }
-    case moa: MixerOutAddresses => storeOutAccounts(moa);log.info(s"\nPrimary Account: ${moa.primaryAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
+    case moa: MixerOutAddresses => storeOutAccounts(moa);log.info(s"\nPrimary Account: ${moa.fromAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
     case _ => log.info("whatever")
   }
 
   def storeOutAccounts( moa: MixerOutAddresses): Unit = {
-    primaryToMixerOut.update(moa.primaryAddress, moa.addresses) //TODO need to grow accounts list if key already exists
+    primaryToMixerOut.update(moa.fromAddress, moa.addresses) //TODO need to grow accounts list if key already exists
     log.info(primaryToMixerOut.toString)
   }
 

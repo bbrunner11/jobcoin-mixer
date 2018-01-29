@@ -5,7 +5,7 @@ package bb.mixer
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import bb.mixer.HttpTransactions._
-import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut}
+import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut, primaryToLastActivity}
 import spray.json._
 import java.util.Date
 import java.util.Calendar
@@ -54,8 +54,12 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
       .filter(z => z.fromAddress.isDefined)).map(_.groupBy(_.fromAddress)).flatten
       .toMap.collect { case (Some(k), v) => (k,v)} //no from address, can't roll up to a mix out address TODO derive primary address?
 
+    val txSinceLastPoll = mixerTransactions.map(f => f._2.filter(t => parseTimestamp(t.timestamp)
+      .compareTo(primaryToLastActivity(t.fromAddress.get)) >= 0)).map(_.groupBy(_.fromAddress)).flatten
+      .toMap.collect { case (Some(k), v) => (k,v)} //make a map of all transactions per address that wants to mix and has a tx timestamp delta
+
     //val txSinceLastPoll = mixerTransactions.flatMap(x => x.filter(z => parseTimestamp(z.timestamp).compareTo(now) < 0)) //all users that have a mixer address and have added funds to that address since last poll
-    val txSinceLastPoll = mixerTransactions.map(x => x)//.keys.map.filter(z => z.parseTimestamp(z.timestamp).compareTo(now) < 0)) //all users that have a mixer address and have added funds to that address since last poll
+
 println("SSSSS   " + txSinceLastPoll.mkString("\n"))
 
    // log.info(parseResponse(response).toString)

@@ -3,7 +3,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions._
-import bb.mixer.MixerMain.{primaryToMixerOut}
+import bb.mixer.MixerMain.{primaryToMixerOut, primaryToLastActivity}
 
 object RequestHandler {
   def props(): Props = {
@@ -29,8 +29,17 @@ class RequestHandler extends Actor with ActorLogging {
 //      }
     //TODO generate a dummyMixer account and pass it along to both mixer calls
     case moa: MixerOutAddresses => {
-      context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.primaryAddress, moa.addresses)
-      sender ! Response(s"Sent your info to the Mixer.  Your mixer address is dummyMixer1.  Please send funds to be mixed to that address. Thanks")
+      primaryToMixerOut.get(moa.fromAddress) match {
+        case Some(_) => {
+          sender ! Error("You already have alternate addresses associated with this address.  Try again.") //limit one set of alternate addresses per primary address
+        }
+        case None => {
+          context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses)
+          primaryToLastActivity.update(moa.fromAddress, java.util.Calendar.getInstance.getTime) //init first time user has used the mixer
+          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is 'dummyMixer1'.  Please send funds to be mixed to that address. Thanks")
+        }
+       }
+
     }
     case mt: MixThis => {
       primaryToMixerOut.get(mt.fromAddress) match { //check that the user has notified mixer of out addresses
