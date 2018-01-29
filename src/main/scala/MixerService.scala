@@ -3,6 +3,7 @@ package bb.mixer
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions.sendJobCoinTransaction
 import bb.mixer.MixerMain.{primaryToMixerIn, primaryToMixerOut}
+import bb.mixer.HttpTransactions._
 
 object MixerService {
   def props(): Props = {
@@ -16,7 +17,12 @@ case class MixerResponse(payload: String)
 class MixerService extends Actor with ActorLogging {
 
   def receive: Receive = {
-    case mt: MixThis => log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
+    case mt: MixThis => {
+      val response = sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount)
+      sender ! response.code
+
+      log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
+    }
     case moa: MixerOutAddresses => storeOutAccounts(moa);log.info(s"\nPrimary Account: ${moa.primaryAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
     case _ => log.info("whatever")
   }

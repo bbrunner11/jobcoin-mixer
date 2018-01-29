@@ -5,7 +5,6 @@ import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions._
 import bb.mixer.MixerMain.{primaryToMixerOut}
 
-
 object RequestHandler {
   def props(): Props = {
     Props(classOf[RequestHandler])
