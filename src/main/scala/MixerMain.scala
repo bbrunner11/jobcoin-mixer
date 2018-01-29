@@ -17,7 +17,7 @@ import scala.io.StdIn
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val outAccounts = jsonFormat2(MixerOutAddresses) // MixerOutAccounts[String, List[String])
-  implicit val mixThis = jsonFormat3(MixThis) // MixThis(String, String, String)
+  implicit val mixThis = jsonFormat3(MixFundsIn) // MixThis(String, String, String)
 }
 
 
@@ -26,9 +26,9 @@ object MixerMain extends JsonSupport {
   val host = "localhost"
   val port = 8080
 
-  val primaryToMixerIn = scala.collection.concurrent.TrieMap[String, String]()
-  val primaryToMixerOut = scala.collection.concurrent.TrieMap[String, Seq[String]]()
-  val primaryToLastActivity = scala.collection.concurrent.TrieMap[String, java.util.Date]()
+  val addressInToMixerIn = scala.collection.concurrent.TrieMap[String, String]()
+  val addressInToMixerOut = scala.collection.concurrent.TrieMap[String, Seq[String]]()
+  val primaryToLastActivity = scala.collection.concurrent.TrieMap[String, java.util.Date]() //TODO get rid of this?
   val mixerInToAddressIn = scala.collection.concurrent.TrieMap[String, String]()
 
   def main(args: Array[String]): Unit = {
@@ -70,7 +70,7 @@ object MixerMain extends JsonSupport {
         } ~
         path("api" / "mixfunds") {
           post {
-            entity(as[MixThis]) { mixThis =>
+            entity(as[MixFundsIn]) { mixThis =>
               onSuccess(requestHandler ? mixThis) {
                 case response: Response => {
                   complete(StatusCodes.OK, response.payload)
