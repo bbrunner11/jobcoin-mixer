@@ -30,9 +30,9 @@ class RequestHandler extends Actor with ActorLogging {
           context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses) //TODO get rid of this and set the values here
           primaryToLastActivity.update(moa.fromAddress, java.util.Calendar.getInstance.getTime) //init first time user has used the mixer
           incMixer += 1
-          addressInToMixerIn.update(moa.fromAddress, s"mixerIn$incMixer") //increment mixer address by 1 per valid mix request TODO do we even need this anymore?
-          mixerInToAddressIn.update(s"mixerIn$incMixer", moa.fromAddress)
-          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is 'mixerIn$incMixer'.  Please send funds to be mixed to that address. Thanks")
+          addressInToMixerIn.update(moa.fromAddress, s"${moa.fromAddress}_mixer$incMixer") //increment mixer address by 1 per valid mix request TODO do we even need this anymore?
+          mixerInToAddressIn.update(s"${moa.fromAddress}_mixer$incMixer", moa.fromAddress)
+          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.  Please send funds to be mixed to that address. Thanks")
         }
        }
     }
@@ -42,7 +42,7 @@ class RequestHandler extends Actor with ActorLogging {
           sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
             case r if(r.code) == 200 => {
               context.actorOf(MixerService.props()) ! MixFundsIn(mt.fromAddress, mt.mixerAddress, mt.amount) //TODO get rid of this, the poller will pick up the transaction
-              sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily. Thanks")
+              sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily depending on network congestion. Thanks")
             }
             case r if(r.code) == 422 => {
               sender ! Error(s"Error. Insufficient funds.")

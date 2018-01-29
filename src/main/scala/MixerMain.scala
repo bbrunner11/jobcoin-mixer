@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import akka.pattern.ask
 import akka.util.Timeout
-
+import scala.collection.concurrent.{TrieMap}
 import scala.concurrent.duration._
 import akka.http.scaladsl.marshallers.sprayjson._
 import spray.json._
@@ -26,12 +26,14 @@ object MixerMain extends JsonSupport {
   val host = "localhost"
   val port = 8080
 
-  val addressInToMixerIn = scala.collection.concurrent.TrieMap[String, String]()
-  val addressInToMixerOut = scala.collection.concurrent.TrieMap[String, Seq[String]]()
-  val primaryToLastActivity = scala.collection.concurrent.TrieMap[String, java.util.Date]() //TODO get rid of this?
-  val mixerInToAddressIn = scala.collection.concurrent.TrieMap[String, String]()
+  val addressInToMixerIn = TrieMap[String, String]()
+  val addressInToMixerOut = TrieMap[String, Seq[String]]() //mix funds, send to these
+  val primaryToLastActivity = TrieMap[String, java.util.Date]() //TODO get rid of this?
+  val mixerInToAddressIn = TrieMap[String, String]()
 
   def main(args: Array[String]): Unit = {
+
+    mixerInToAddressIn.update("house2", "anon") //TODO make this real
 
     implicit val system = ActorSystem("mixer")
     implicit val materializer = ActorMaterializer()
@@ -51,7 +53,7 @@ object MixerMain extends JsonSupport {
           complete(StatusCodes.OK, "Everything is great!")
         }
       } ~
-        path("api" / "startmixer") {
+        path("api" / "assignmixer") {
           post {
             entity(as[MixerOutAddresses]) { mixerOut =>
               onSuccess(requestHandler ? mixerOut) {

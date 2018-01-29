@@ -45,49 +45,50 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
     //TODO need to do proper string to number casting and error handling at some point!!!
     //mixerInToAddressIn.update("test1", "test2")
 
-    /**
-      * Get all transactions for known mixers that do not have a zero balance. If we know there's a balance at a mixer address when this runs,
-      * the timeStamp is irrelevant, the balance should be mixed and distributed to whomever is assigned to that mixer address in mixerInToAddressIn
-      *
-      * Partition by the fromAddress, since if it's a mixer address with no fromAddress, the house gets to keep it :)
-      * Filter the transactions where a fromAddress is defined but is also a mixer address since we don't care about mixer outgoing transactions
-      */
-    val allMixerTransactions = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance != "0")
-        .map(x => x.transactions.partition(_.fromAddress.isDefined))
+   val knownAddressTxs = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance.trim.toDouble > 0d)
+      .map(x => (x.balance.toDouble, x.transactions.partition(d => d.fromAddress.isDefined || mixerInToAddressIn.values.toList.contains(d.toAddress)))) //either there's a fromAddress or the sender has a mixer
 
-    val z = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance != "0")
-      .map(x => (x.balance, x.transactions.partition(_.fromAddress.isDefined)))
+    //    val knownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
+    //      && mixerInToAddressIn.values.toList.contains(n.fromAddress.get))) //known address sends to a known mixer
+    println("XXXXX " + mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)))
 
-    val knownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-      && mixerInToAddressIn.values.toList.contains(n.fromAddress.get))) //known address sends to a known mixer
+    val knownMixerHasBalance = knownAddressTxs.map(x => (x._1, x._2._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress) //mixer exists from startup
+      && mixerInToAddressIn.values.toList.contains(n.fromAddress.getOrElse("anon"))))).map(tx => {
+      val balance = tx._1.toLong
+      val (fromAddress, toAddress, houseKeeps) = tx._2.headOption match {
+        case Some(fa) => (fa.fromAddress.get, tx._2.head.toAddress, false)
+        case None => ("anon", "house2", true) //TODO make this a real house account in config
+      }
 
-    val zz = z.map(x => (x._1, x._2._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-      && mixerInToAddressIn.values.toList.contains(n.fromAddress.get)))) //known address sends to a known mixer
+      val outAddresses = addressInToMixerOut.getOrElse(fromAddress, Seq("house2")) //safe
 
-    val unknownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-      && !mixerInToAddressIn.values.toList.contains(n.fromAddress.get)))  // unknown address sends to known mixer
+      MixFundsOut(fromAddress, toAddress, outAddresses, balance, houseKeeps)
+    }) //known address sends to a known mixer
 
-    val zzz = z.map(x => (x._1, x._2._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-      && !mixerInToAddressIn.values.toList.contains(n.fromAddress.get))))  // unknown address sends to known mixer
+    println(knownMixerHasBalance)
+    //
+    //    val unknownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
+    //      && !mixerInToAddressIn.values.toList.contains(n.fromAddress.get)))  // unknown address sends to known mixer
+    //
+    //    val zzz = z.map(x => (x._1, x._2._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
+    //      && !mixerInToAddressIn.values.toList.contains(n.fromAddress.get))))  // unknown address sends to known mixer
+    //
+    //    val anonAddressTxs = allMixerTransactions.flatMap(_._2) //anonymous address (no fromAddress, UI initiated) sends to known mixer
+    //
+    //    val zzzz = z.map(a => (a._1, a._2._2)) //anonymous address (no fromAddress, UI initiated) sends to known mixer
+    //
+    //    val knownAddressTotals = knownAddressTxs.groupBy(_.fromAddress.get)
+    //      .map{case (k,v) => MixFundsOut(k, v.head.toAddress, addressInToMixerOut.get(k).get, v.map(_.amount.toDouble).sum, false)} //the get here is safe since we know the fromAddress
+    //
+    //    val anonAddressTotals = anonAddressTxs.map(x => MixFundsOut("anon", x.toAddress, Seq("house1"), anonAddressTxs.map(_.amount.toDouble).sum, true))
 
-    val anonAddressTxs = allMixerTransactions.flatMap(_._2) //anonymous address (no fromAddress, UI initiated) sends to known mixer
 
-    val zzzz = z.map(a => (a._1, a._2._2)) //anonymous address (no fromAddress, UI initiated) sends to known mixer
-
-    val knownAddressTotals = knownAddressTxs.groupBy(_.fromAddress.get)
-      .map{case (k,v) => MixFundsOut(k, v.head.toAddress, addressInToMixerOut.get(k).get, v.map(_.amount.toDouble).sum, false)} //the get here is safe since we know the fromAddress
-
-    val anonAddressTotals = anonAddressTxs.map(x => MixFundsOut("anon", x.toAddress, Seq("house1"), anonAddressTxs.map(_.amount.toDouble).sum, true))
-    println("known: "+zz.mkString("\n"))
-    //println("fund: "+ knownAddressTotals)
-    println("unknown: "+zzz.mkString("\n"))
-    println("anonymous: "+ zzzz)
     //val mixerTransactions = allTransactionsPerUser.flatMap(f => f.transactions.filter(ts => parseTimestamp(ts.timestamp).compareTo(now) > 0)) //only get txs since the last poll
 
 
-    val x = (anonAddressTotals ++ knownAddressTotals).sortBy(_.houseKeeps == false)
+    //val x = (anonAddressTotals ++ knownAddressTotals).sortBy(_.houseKeeps == false)
 
-    //context.actorOf(MixerService.props()) ! knownAddressTotals //anonAddressTotals ++ knownAddressTotals
+    context.actorOf(MixerService.props()) ! knownMixerHasBalance
 
   }
 
