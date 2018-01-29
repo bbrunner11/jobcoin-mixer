@@ -50,10 +50,12 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
 
     primaryToMixerIn.update("Alice", "Bob")
 
-    val mixerTransactions = allTransactionsPerUser.map(f => f.transactions.filter(z => z.fromAddress.isDefined)) //no from address, can't roll up to a mix out account TODO derive out account?
+    val mixerTransactions = allTransactionsPerUser.map(f => f.transactions
+      .filter(z => z.fromAddress.isDefined)).map(_.groupBy(_.fromAddress)).flatten
+      .toMap.collect { case (Some(k), v) => (k,v)} //no from address, can't roll up to a mix out address TODO derive primary address?
 
-    val txSinceLastPoll = mixerTransactions.flatMap(x => x.filter(z => parseTimestamp(z.timestamp).compareTo(now) < 0)) //all users that have a mixer address and have added funds to that address since last poll
-
+    //val txSinceLastPoll = mixerTransactions.flatMap(x => x.filter(z => parseTimestamp(z.timestamp).compareTo(now) < 0)) //all users that have a mixer address and have added funds to that address since last poll
+    val txSinceLastPoll = mixerTransactions.map(x => x)//.keys.map.filter(z => z.parseTimestamp(z.timestamp).compareTo(now) < 0)) //all users that have a mixer address and have added funds to that address since last poll
 println("SSSSS   " + txSinceLastPoll.mkString("\n"))
 
    // log.info(parseResponse(response).toString)
