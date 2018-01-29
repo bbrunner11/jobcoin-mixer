@@ -19,7 +19,11 @@ class MixerService extends Actor with ActorLogging {
     case mt: MixThis => {
       val response = log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
     }
-    case moa: MixerOutAddresses => storeOutAccounts(moa);log.info(s"\nPrimary Account: ${moa.fromAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
+    case moa: MixerOutAddresses => {
+      storeOutAccounts(moa)
+      log.info(s"\nPrimary Account: ${moa.fromAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
+      log.info(s"MixerInMap: $primaryToMixerIn")
+    }
     case _ => log.info("whatever")
   }
 

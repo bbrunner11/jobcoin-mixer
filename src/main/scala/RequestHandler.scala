@@ -29,7 +29,8 @@ class RequestHandler extends Actor with ActorLogging {
         case None => {
           context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses)
           primaryToLastActivity.update(moa.fromAddress, java.util.Calendar.getInstance.getTime) //init first time user has used the mixer
-          primaryToMixerIn.update(moa.fromAddress, s"mixerIn${incMixer += 1}") //increment mixer address by 1 per valid mix request
+          incMixer += 1
+          primaryToMixerIn.update(moa.fromAddress, s"mixerIn$incMixer") //increment mixer address by 1 per valid mix request
           sender ! Response(s"Sent your info to the Mixer.  Your mixer address is 'mixerIn$incMixer'.  Please send funds to be mixed to that address. Thanks")
         }
        }

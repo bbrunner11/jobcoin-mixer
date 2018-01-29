@@ -31,6 +31,7 @@ case class Transactions(balance: String, transactions: List[Transaction])
 
 case class OwnerTransactions(owner: String, balance: String, toAccount: String, transaction: List[Transaction])
 
+case class FlattenedTransactions(fromAddress: String, toAddress: String, timeStamp: String, amount: String)
 
 class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
 
@@ -53,10 +54,16 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
     val allTransactionsPerUser = primaryToMixerOut.keys.map(x => getJobCoinTransactionsFor(x)).toList.map(r => parseResponse(r))
       .map(txs => {
         val validTransactions = txs.transactions.filter(f => f.fromAddress.isDefined && parseTimestamp(f.timestamp).compareTo(primaryToLastActivity(f.fromAddress.get)) >= 0)
-        OwnerTransactions(validTransactions.head.fromAddress.get, txs.balance, validTransactions.head.fromAddress.get, validTransactions)
-      }).filter(ot => ot.toAccount == primaryToMixerIn.get(ot.owner))
+          .map(ft => FlattenedTransactions(ft.fromAddress.get, ft.toAddress, ft.timestamp, ft.amount))
 
-    println(allTransactionsPerUser.mkString)
+        validTransactions//.filter(mixed => primaryToMixerIn.keySet.exists(_ == mixed.toAddress))
+      }).flatten
+
+    //TODO QUERY THE MIXER ACCOUNTS(  based on primaryToMixerIn values), CHECK FOR BALANCE, roll them up to the primary, AND DISTRIBUTE
+    //OwnerTransactions(validTransactions.head.fromAddress.get, txs.balance, validTransactions.head.fromAddress.get, validTransactions)
+    //}).filter(ot => ot.toAccount == primaryToMixerIn.get(ot.owner))
+
+    println(allTransactionsPerUser)
 
 
     //val zz = allTransactionsPerUser.map(txs => OwnerTransactions(txs.transactions.head.fromAddress.get, txs.balance, txs.transactions))
