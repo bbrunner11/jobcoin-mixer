@@ -91,7 +91,7 @@ object MixerMain extends JsonSupport {
     val bindingFuture = Http().bindAndHandle(route, host, port)
 
     //set up a transaction polling schedule
-    val cancellable = system.scheduler.schedule(0 milliseconds, 5000 milliseconds, txPoller, "poll") //TODO make this a Runnable and send a message so threads are queued??
+    val cancellable = system.scheduler.schedule(0 milliseconds, 15000 milliseconds, txPoller, "poll") //TODO make this a Runnable and send a message so threads are queued??
 
     println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
 

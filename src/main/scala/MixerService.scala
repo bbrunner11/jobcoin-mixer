@@ -37,8 +37,10 @@ class MixerService extends Actor with ActorLogging {
   }
 
   def doTheMix(mtf: MixFundsOut): Unit = {
-    //distribute a total amount into sub accounts
 
+
+
+    //distribute a total amount into sub accounts
     Thread.sleep(1000L) // TODO figure out a way to randomize the sleep
 
     val distIncrement = 5 //TODO make this configurable
