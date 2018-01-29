@@ -18,10 +18,7 @@ class MixerService extends Actor with ActorLogging {
 
   def receive: Receive = {
     case mt: MixThis => {
-      val response = sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount)
-      sender ! response.code
-
-      log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
+      val response = log.info(s"\nPrimary Account: ${mt.fromAddress}\n\tMixerAddress: ${mt.mixerAddress}\n\tAmount: ${mt.amount}\n$primaryToMixerIn")
     }
     case moa: MixerOutAddresses => storeOutAccounts(moa);log.info(s"\nPrimary Account: ${moa.primaryAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
     case _ => log.info("whatever")
