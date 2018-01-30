@@ -20,6 +20,7 @@ lazy val root = (project in file(".")).
   )
 libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.3.0"
 libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+libraryDependencies += "com.typesafe" % "config" % "1.3.1"
 
 homepage := Some(url("https://github.com/bbrunner11/jobcoin-mixer"))
 

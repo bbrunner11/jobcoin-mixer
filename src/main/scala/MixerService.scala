@@ -4,16 +4,22 @@ import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions.sendJobCoinTransaction
 import bb.mixer.MixerMain.{addressInToMixerIn, addressInToMixerOut, mixerInToAddressIn}
 import scala.util.control.Breaks._
+import bb.mixer.Configs._
+
+
 
 object MixerService {
   def props(): Props = {
     Props(classOf[MixerService])
   }
+
 }
 
 case class MixFundsIn(fromAddress: String, mixerAddress: String, amount: String)
 
-case class MixFundsOut(initatingAddress: String, mixerAddress: String, outAccounts: Seq[String], amount: Double, houseKeeps: Boolean)
+case class MixFundsOut(initatingAddress: String, mixerAddress: String, outAccounts: Seq[String], amount: Double, houseKeeps: Boolean) {
+  override def toString =  s" initAddres: $initatingAddress mixerAddress: $mixerAddress outAccounts: $outAccounts txAmount: $amount houseKeeps: $houseKeeps"
+}
 
 case class MixerOutAddresses(fromAddress: String, addresses: Seq[String])
 
@@ -21,6 +27,7 @@ case class MixerResponse(payload: String)
 
 class MixerService extends Actor with ActorLogging {
 
+  val config = Configs
   val rand1 = new scala.util.Random
 
   def receive: Receive = {
@@ -47,7 +54,7 @@ class MixerService extends Actor with ActorLogging {
 
 
     //distribute a total amount into sub accounts
-    Thread.sleep(1000L) // TODO figure out a way to randomize the sleep
+    Thread.sleep(config.mixerSleep.toLong) // TODO figure out a way to randomize the sleep
 
     val distIncrement = 1 //TODO make this configurable
     val addressesOut = mtf.outAccounts

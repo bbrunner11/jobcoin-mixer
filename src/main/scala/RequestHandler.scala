@@ -57,7 +57,7 @@ class RequestHandler extends Actor with ActorLogging {
 
 
     }
-    case Request => {
+    case Request => { // TODO get rid or use as catch all?
       println("got here")
       sender() ! Response("ok")
     }

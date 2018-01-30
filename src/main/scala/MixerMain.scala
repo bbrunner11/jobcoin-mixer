@@ -12,6 +12,7 @@ import scala.collection.concurrent.{TrieMap}
 import scala.concurrent.duration._
 import akka.http.scaladsl.marshallers.sprayjson._
 import spray.json._
+import bb.mixer.Configs._
 
 import scala.io.StdIn
 
@@ -23,8 +24,10 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
 object MixerMain extends JsonSupport {
 
-  val host = "localhost"
-  val port = 8080
+  val config = Configs
+
+  val host = config.host
+  val port = config.port
 
   val addressInToMixerIn = TrieMap[String, String]()
   val addressInToMixerOut = TrieMap[String, Seq[String]]() //mix funds, send to these

@@ -58,6 +58,7 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
       .filter(n => mixerInToAddressIn.values.toList.contains(n.fromAddress.getOrElse("house2")))) //if no from account, assume it is from the UI so use house mixer account (which maps to "anon")
     }
       .map(tx => {
+        println("CCCCCCCCCCC :"+tx)
       val balance = tx._1.toDouble
       val (fromAddress, toAddress, houseKeeps) = tx._2.headOption match {
         case Some(fa) => (fa.fromAddress.get, tx._2.head.toAddress, false)
