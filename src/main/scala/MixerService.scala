@@ -66,7 +66,7 @@ class MixerService extends Actor with ActorLogging {
         sendJobCoinTransaction(mtf.mixerAddress, config.houseVigAddress, vig.toString)
 
     })
-println(s"Finished mixing funds in ${mtf.mixerAddress}")
+println(s"***** Finished mixing funds for mixer ${mtf.mixerAddress} *****")
   }
 
   private def randSum(n: Int, min: Int, m: Int): List[Int] = { //TODO refactor this crap

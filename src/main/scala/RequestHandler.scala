@@ -67,7 +67,7 @@ class RequestHandler extends Actor with ActorLogging with JsonSupport {
     }
     case sr: StatusRequest => {
       val result = getJobCoinTransactionsFor(sr.address)
-      sender ! Response(result.body)
+      sender ! Response(s"Balance of ${sr.address}: ${parseResponse(result).balance}")
     }
 
     case _ => println("Error, not sure what."); Error
