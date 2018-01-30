@@ -16,8 +16,8 @@ import spray.json._
 import scala.io.StdIn
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val outAccounts = jsonFormat2(MixerOutAddresses) // MixerOutAccounts[String, List[String])
-  implicit val mixThis = jsonFormat3(MixFundsIn) // MixThis(String, String, String)
+  implicit val outAccounts = jsonFormat2(MixerOutAddresses)
+  implicit val mixThis = jsonFormat3(MixFundsIn)
   implicit val transaction = jsonFormat4(Transaction)
   implicit val transactions = jsonFormat2(Transactions)
   implicit val statReq = jsonFormat1(StatusRequest)
@@ -55,7 +55,25 @@ object MixerMain extends JsonSupport {
 
       path("api") {
         pathEndOrSingleSlash {
-          complete(StatusCodes.OK, "All mixers are operational.")
+          complete(StatusCodes.OK,
+            s"""All mixers are operational.
+               |
+               |How to use:
+               |
+               | To be assigned a mixer use this URL: http://$host:$port/api/assignmixer
+               | To start a mixing session use this URL: http://$host:$port/api/mixfunds
+               | To see the status of your mixer use this URL: http://$host:$port/api/mixstatus/<mixer address>
+               |
+               |Example mixing using curl:
+               |
+               | curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "addresses" : ["alt1", "alt2", "alt3"] }' http://$host:$port/api/assignmixer
+               |   --- the above will response w/ the mixer address you should use for this fromAddress going forward.
+               | curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "mixerAddress" : "mixerIn1", "amount" : "75" }'
+               |   --- the above will send your funds from fromAddress to the mixer address you specify (above, mixerIn1).
+               |                            *** BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS! ***
+               |
+               |You can refresh this URL http://$host:$port/api/mixstatus/mixerIn1 to see the status of your mixer (ie, balance and all transactions):
+             """.stripMargin)
         }
       } ~
         path("api" / "assignmixer") {
