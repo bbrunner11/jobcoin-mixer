@@ -12,15 +12,14 @@ object MixerService {
 
 }
 
+case class MixerOutAddresses(fromAddress: String, addresses: Seq[String])
+case class MixerResponse(payload: String)
 case class MixFundsIn(fromAddress: String, mixerAddress: String, amount: String)
-
 case class MixFundsOut(initatingAddress: String, mixerAddress: String, outAddresses: Seq[String], amount: Int, houseKeeps: Boolean) {
   override def toString = s" MixFundsOut(initAddres: $initatingAddress mixerAddress: $mixerAddress outAccounts: $outAddresses txAmount: $amount houseKeeps: $houseKeeps)"
 }
 
-case class MixerOutAddresses(fromAddress: String, addresses: Seq[String])
 
-case class MixerResponse(payload: String)
 
 class MixerService extends Actor with ActorLogging {
 

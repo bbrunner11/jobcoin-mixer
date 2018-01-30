@@ -12,7 +12,9 @@ object RequestHandler {
 }
 
 case class Request(request: String)
+
 case class Response(payload: String)
+
 case class Error(error: String)
 
 class RequestHandler extends Actor with ActorLogging {
@@ -28,24 +30,28 @@ class RequestHandler extends Actor with ActorLogging {
         }
         case None => {
           context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses) //TODO get rid of this and set the values here
-          primaryToLastActivity.update(moa.fromAddress, java.util.Calendar.getInstance.getTime) //init first time user has used the mixer
+
           incMixer += 1
           addressInToMixerIn.update(moa.fromAddress, s"${moa.fromAddress}_mixer$incMixer") //increment mixer address by 1 per valid mix request TODO do we even need this anymore?
           mixerInToAddressIn.update(s"${moa.fromAddress}_mixer$incMixer", moa.fromAddress)
-          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.  Please send funds you wish mixed to that address. Thanks")
+          sender ! Response(
+            s"""Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.
+               |Please send the funds you wish mixed to that address. Thanks
+               |NOTE:  The mixer is only able to process *integer numbers* at this time.  Sorry :(
+             """.stripMargin)
         }
-       }
+      }
     }
     case mt: MixFundsIn => {
       addressInToMixerOut.get(mt.fromAddress) match { //check that the user has notified mixer of out addresses
         case Some(_) => {
           sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
-            case r if(r.code) == 200 => {
+            case r if (r.code) == 200 => {
               context.actorOf(MixerService.props()) ! MixFundsIn(mt.fromAddress, mt.mixerAddress, mt.amount) //TODO get rid of this, the poller will pick up the transaction
-              sender ! Response(s"Sent your info to the Mixer. Your mix will be done momentarily depending on network congestion. Thanks")
+              sender ! Response(s"Sent your info to the Mixer. Your mix will be started momentarily. Thanks")
             }
-            case r if(r.code) == 422 => {
-              sender ! Error(s"Error. Insufficient funds.")
+            case r if (r.code) == 422 => {
+              sender ! Error(s" Error. Insufficient funds in account ${mt.fromAddress}. Unable to transfer to the mixer.")
             }
             case _ => sender ! Error("Something went wrong.")
           }
@@ -61,7 +67,7 @@ class RequestHandler extends Actor with ActorLogging {
       println("got here")
       sender() ! Response("ok")
     }
-    case _ => println("error");Error
+    case _ => println("error"); Error
 
   }
 }
