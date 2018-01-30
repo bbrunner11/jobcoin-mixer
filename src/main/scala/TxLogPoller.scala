@@ -45,19 +45,23 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
     //TODO need to do proper string to number casting and error handling at some point!!!
     //mixerInToAddressIn.update("test1", "test2")
 
-   val knownAddressTxs = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance.trim.toDouble > 0d)
-      .map(x => (x.balance.toDouble, x.transactions.partition(d => d.fromAddress.isDefined || mixerInToAddressIn.values.toList.contains(d.toAddress)))) //either there's a fromAddress or the sender has a mixer
-
+    val knownAddressTxs = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance.trim.toDouble > 0d)
+      .map(x => (x.balance.toDouble, x.transactions.filter(d => {
+        d.fromAddress.isDefined || mixerInToAddressIn.keySet.contains(d.toAddress)
+      }))) //either there's a fromAddress or the sender has a mixer
+    println(knownAddressTxs.mkString("\n"))
     //    val knownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
     //      && mixerInToAddressIn.values.toList.contains(n.fromAddress.get))) //known address sends to a known mixer
     println("XXXXX " + mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)))
 
-    val knownMixerHasBalance = knownAddressTxs.map(x => (x._1, x._2._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress) //mixer exists from startup
-      && mixerInToAddressIn.values.toList.contains(n.fromAddress.getOrElse("anon"))))).map(tx => {
-      val balance = tx._1.toLong
+    val knownMixerHasBalance = knownAddressTxs.map { case (balance, transactions) => (balance, transactions
+      .filter(n => mixerInToAddressIn.values.toList.contains(n.fromAddress.getOrElse("house2")))) //if no from account, assume it is from the UI so use house mixer account (which maps to "anon")
+    }
+      .map(tx => {
+      val balance = tx._1.toDouble
       val (fromAddress, toAddress, houseKeeps) = tx._2.headOption match {
         case Some(fa) => (fa.fromAddress.get, tx._2.head.toAddress, false)
-        case None => ("anon", "house2", true) //TODO make this a real house account in config
+        case None => ("anon", "house1_mixer1", true) //TODO make this a real house account in config
       }
 
       val outAddresses = addressInToMixerOut.getOrElse(fromAddress, Seq("house2")) //safe

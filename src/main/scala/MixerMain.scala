@@ -34,6 +34,7 @@ object MixerMain extends JsonSupport {
   def main(args: Array[String]): Unit = {
 
     mixerInToAddressIn.update("house2", "anon") //TODO make this real
+    addressInToMixerOut.update("anon", List("house2")) //TODO do we need this?
 
     implicit val system = ActorSystem("mixer")
     implicit val materializer = ActorMaterializer()
@@ -93,7 +94,7 @@ object MixerMain extends JsonSupport {
     val bindingFuture = Http().bindAndHandle(route, host, port)
 
     //set up a transaction polling schedule
-    val cancellable = system.scheduler.schedule(0 milliseconds, 15000 milliseconds, txPoller, "poll") //TODO make this a Runnable and send a message so threads are queued??
+    val cancellable = system.scheduler.schedule(0 milliseconds, 30 seconds, txPoller, "poll") //TODO make this a Runnable and send a message so threads are queued?? might not wrk
 
     println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
 

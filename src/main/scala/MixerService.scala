@@ -2,7 +2,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions.sendJobCoinTransaction
-import bb.mixer.MixerMain.{addressInToMixerIn, addressInToMixerOut}
+import bb.mixer.MixerMain.{addressInToMixerIn, addressInToMixerOut, mixerInToAddressIn}
 import scala.util.control.Breaks._
 
 object MixerService {
@@ -21,9 +21,11 @@ case class MixerResponse(payload: String)
 
 class MixerService extends Actor with ActorLogging {
 
+  val rand1 = new scala.util.Random
+
   def receive: Receive = {
     case mfi: MixFundsIn => {
-      val response = log.info(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$addressInToMixerIn")
+      log.info(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
     }
     case mfo: List[MixFundsOut] => {  //TODO fix the type erasure here, probably wrap it in an outer case class
       mfo.foreach(tx => doTheMix(tx))
@@ -31,7 +33,7 @@ class MixerService extends Actor with ActorLogging {
     case moa: MixerOutAddresses => {
       storeOutAccounts(moa)
       log.info(s"\nPrimary Account: ${moa.fromAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
-      log.info(s"MixerInMap: $addressInToMixerIn")
+      log.info(s"MixerInToAdressIn: $mixerInToAddressIn")
     }
     case _ => log.info("whatever")
   }
@@ -54,23 +56,22 @@ class MixerService extends Actor with ActorLogging {
    breakable {
 
       for (iter <- 1 to distIncrement) {
-        val rand1 = new scala.util.Random
+
         val randDouble= rand1.nextDouble
 
         val combined = amount * randDouble//  (amount / (distIncrement - iter)) * randDouble//somewhat normalize distribution based on stage of iteration
 
-        val randInt = new scala.util.Random
-        val out = randInt.nextInt(addressesOut.size) //random index to pick out accounts from Seq
+        val out = rand1.nextInt(addressesOut.size) //random index to pick out accounts from Seq
 
 
         if (amount == 0 || iter == distIncrement) {
           log.info(s"${mtf.mixerAddress} sent balance $amount to ${addressesOut(out)} for ${mtf.initatingAddress}") //send balance to out accts
-          sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), amount.toString)
+          sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), amount.longValue().toString)
           break
         }
         else {
           log.info(s"${mtf.mixerAddress} sent random $combined to ${addressesOut(out)} for ${mtf.initatingAddress}") //send random amount to out accts
-          sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), combined.toString)
+          sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), combined.longValue()toString)
 
         }
         amount -= combined
