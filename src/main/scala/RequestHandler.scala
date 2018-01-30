@@ -12,7 +12,9 @@ object RequestHandler {
 }
 
 case class StatusRequest(address: String)
+
 case class Response(payload: String)
+
 case class Error(error: String)
 
 class RequestHandler extends Actor with ActorLogging with JsonSupport {
@@ -27,10 +29,11 @@ class RequestHandler extends Actor with ActorLogging with JsonSupport {
           sender ! Error("You already have alternate addresses associated with this address.  Just send some funds to your mixer.") //limit one set of alternate addresses per primary address
         }
         case None => {
-          context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses) //TODO get rid of this and set the values here
+          storeOutAccounts(moa) //map user address to their mixer out accounts
 
           incMixer += 1
           mixerInToAddressIn.update(s"${moa.fromAddress}_mixer$incMixer", moa.fromAddress)
+
           sender ! Response(
             s"""Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.
                |Please send the funds you wish mixed to that address.
@@ -62,13 +65,18 @@ class RequestHandler extends Actor with ActorLogging with JsonSupport {
         }
       }
     }
-    case sr: StatusRequest =>  {
-      println(sr.address)
+    case sr: StatusRequest => {
       val result = getJobCoinTransactionsFor(sr.address)
-        sender ! Response(result.body)
+      sender ! Response(result.body)
     }
 
-    case _ => println("error"); Error
+    case _ => println("Error, not sure what."); Error
 
   }
+
+  private def storeOutAccounts(moa: MixerOutAddresses): Unit = {
+    addressInToMixerOut.getOrElseUpdate(moa.fromAddress, moa.addresses) //right now, 1 unique address is assigned to a predefined set of out addresses
+    log.info(addressInToMixerOut.toString)
+  }
+
 }

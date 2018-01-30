@@ -68,7 +68,7 @@ object MixerMain extends JsonSupport {
                |
                | curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "addresses" : ["alt1", "alt2", "alt3"] }' http://$host:$port/api/assignmixer
                |   --- the above will response w/ the mixer address you should use for this fromAddress going forward.
-               | curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "mixerAddress" : "mixerIn1", "amount" : "75" }'
+               | curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "mixerAddress" : "mixerIn1", "amount" : "75" }' http://$host:$port/api/mixfunds
                |   --- the above will send your funds from fromAddress to the mixer address you specify (above, mixerIn1).
                |                            *** BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS! ***
                |

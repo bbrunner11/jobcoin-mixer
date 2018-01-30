@@ -12,13 +12,14 @@ object MixerService {
 }
 
 case class MixerOutAddresses(fromAddress: String, addresses: Seq[String])
+
 case class MixerResponse(payload: String)
+
 case class MixFundsIn(fromAddress: String, mixerAddress: String, amount: String)
+
 case class MixFundsOut(initatingAddress: String, mixerAddress: String, outAddresses: Seq[String], amount: Int, houseKeeps: Boolean) {
   override def toString = s" MixFundsOut(initAddres: $initatingAddress mixerAddress: $mixerAddress outAccounts: $outAddresses txAmount: $amount houseKeeps: $houseKeeps)"
 }
-
-
 
 class MixerService extends Actor with ActorLogging {
 
@@ -27,23 +28,14 @@ class MixerService extends Actor with ActorLogging {
 
   def receive: Receive = {
     case mfi: MixFundsIn => {
-      log.info(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
+      log.debug(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
     }
     case mfo: MixFundsOut => {
       doTheMix(mfo)
     }
-    case moa: MixerOutAddresses => {
-      storeOutAccounts(moa)
-      log.info(s"\nPrimary Account: ${moa.fromAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
-      log.info(s"MixerInToAdressIn: $mixerInToAddressIn")
-    }
     case _ => log.info("Akka sender not sending a valid message.")
   }
 
-  private def storeOutAccounts(moa: MixerOutAddresses): Unit = {
-    addressInToMixerOut.getOrElseUpdate(moa.fromAddress, moa.addresses) //right now, 1 unique address is assigned to a predefined set of out addresses
-    log.info(addressInToMixerOut.toString)
-  }
 
   private def doTheMix(mtf: MixFundsOut): Unit = {
 
@@ -63,8 +55,10 @@ class MixerService extends Actor with ActorLogging {
     splitAmount.foreach(randAmt => {
       val out = rand1.nextInt(addressesOut.size)
       val vig = if (randAmt < 10) 0 else Math.round(randAmt * .05) //since the mixer can only handle integer amounts, calc vig and round for values > 10
-      log.info(s"${mtf.mixerAddress} sent ${randAmt - vig} to ${addressesOut(out)} by ${mtf.initatingAddress}") //send random amount to out accts
-      log.info(s"${mtf.mixerAddress} sent transaction fee of $vig to ${config.houseVigAddress} by ${mtf.initatingAddress}")
+
+      println(s"Mixing: ${mtf.mixerAddress} -> ${randAmt - vig} to ${addressesOut(out)} (Tx fee: $vig sent to ${config.houseVigAddress}")
+      //log.info(s"${mtf.mixerAddress} sent ${randAmt - vig} to ${addressesOut(out)} by ${mtf.initatingAddress}") //send random amount to out accts
+      //log.info(s"${mtf.mixerAddress} sent transaction fee of $vig to ${config.houseVigAddress} by ${mtf.initatingAddress}")
 
       Thread.sleep(((rand1.nextDouble * config.mixerSleep.toDouble) + config.mixerSleep.toDouble).toLong) // randomize transaction timing
 
@@ -72,8 +66,8 @@ class MixerService extends Actor with ActorLogging {
         sendJobCoinTransaction(mtf.mixerAddress, config.houseVigAddress, vig.toString)
 
     })
-
-   }
+println(s"Finished mixing funds in ${mtf.mixerAddress}")
+  }
 
   private def randSum(n: Int, min: Int, m: Int): List[Int] = { //TODO refactor this crap
     val rand = scala.util.Random
