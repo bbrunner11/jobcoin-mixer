@@ -30,15 +30,15 @@ class MixerService extends Actor with ActorLogging {
     case mfi: MixFundsIn => {
       log.info(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
     }
-    case mfo: List[MixFundsOut] => { //TODO fix the type erasure here, probably wrap it in an outer case class
-      mfo.foreach(tx => doTheMix(tx))
+    case mfo: MixFundsOut => {
+      doTheMix(mfo)
     }
     case moa: MixerOutAddresses => {
       storeOutAccounts(moa)
       log.info(s"\nPrimary Account: ${moa.fromAddress}\n\tMixerOutAccounts: ${moa.addresses.toString}")
       log.info(s"MixerInToAdressIn: $mixerInToAddressIn")
     }
-    case _ => log.info("whatever")
+    case _ => log.info("Akka sender not sending a valid message.")
   }
 
   private def storeOutAccounts(moa: MixerOutAddresses): Unit = {
@@ -48,7 +48,7 @@ class MixerService extends Actor with ActorLogging {
 
   private def doTheMix(mtf: MixFundsOut): Unit = {
 
-    val distIncrement = 5 //TODO make this configurable??
+    val txBuckets = 5 + rand1.nextInt(10) //split the amount into this many buckets(base + some random Int to 10
     val addressesOut = mtf.outAddresses
     val amount = mtf.amount
 
@@ -59,49 +59,24 @@ class MixerService extends Actor with ActorLogging {
       * Otherwise the failed balance with vig intact stays in the mixer account and will get picked up by the next poller
       */
 
-    val splitAmount = randSum(distIncrement, 0, amount).filter(_ != 0)
+    val splitAmount = randSum(txBuckets, 0, amount).filter(_ != 0)
 
     splitAmount.foreach(randAmt => {
       val out = rand1.nextInt(addressesOut.size)
       val vig = if (randAmt < 10) 0 else Math.round(randAmt * .05) //since the mixer can only handle integer amounts, calc vig and round for values > 10
-      log.info(s"${mtf.mixerAddress} sent random ${randAmt - vig} to ${addressesOut(out)} by ${mtf.initatingAddress}") //send random amount to out accts
+      log.info(s"${mtf.mixerAddress} sent ${randAmt - vig} to ${addressesOut(out)} by ${mtf.initatingAddress}") //send random amount to out accts
       log.info(s"${mtf.mixerAddress} sent transaction fee of $vig to ${config.houseVigAddress} by ${mtf.initatingAddress}")
 
-      Thread.sleep((rand1.nextDouble * config.mixerSleep.toDouble).toLong) // randomize transaction timing
+      Thread.sleep(((rand1.nextDouble * config.mixerSleep.toDouble) + config.mixerSleep.toDouble).toLong) // randomize transaction timing
 
       if (sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), (randAmt - vig).toString).isSuccess && vig != 0) //can't send 0 amount
         sendJobCoinTransaction(mtf.mixerAddress, config.houseVigAddress, vig.toString)
 
     })
 
-    //   breakable {
-    //
-    //      for (iter <- 1 to distIncrement) {
-    //
-    //        val randDouble= rand1.nextDouble
-    //
-    //        val combined = amount * randDouble//  (amount / (distIncrement - iter)) * randDouble//somewhat normalize distribution based on stage of iteration
-    //
-    //        val out = rand1.nextInt(addressesOut.size) //random index to pick out accounts from Seq
-    //
-    //
-    //        if (amount == 0 || iter == distIncrement) {
-    //          log.info(s"${mtf.mixerAddress} sent balance $amount to ${addressesOut(out)} for ${mtf.initatingAddress}") //send balance to out accts
-    //          sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), amount.longValue().toString)
-    //          break
-    //        }
-    //        else {
-    //          log.info(s"${mtf.mixerAddress} sent random $combined to ${addressesOut(out)} for ${mtf.initatingAddress}") //send random amount to out accts
-    //          sendJobCoinTransaction(mtf.mixerAddress, addressesOut(out), combined.longValue()toString)
-    //
-    //        }
-    //        amount -= combined
-    //
-    //      }
-    //    }
-  }
+   }
 
-  private def randSum(n: Int, min: Int, m: Int): List[Int] = {
+  private def randSum(n: Int, min: Int, m: Int): List[Int] = { //TODO refactor this crap
     val rand = scala.util.Random
 
     val max = m - min * n

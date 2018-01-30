@@ -26,7 +26,7 @@ class RequestHandler extends Actor with ActorLogging {
     case moa: MixerOutAddresses => {
       addressInToMixerOut.get(moa.fromAddress) match {
         case Some(_) => {
-          sender ! Error("You already have alternate addresses associated with this address.  Try again.") //limit one set of alternate addresses per primary address
+          sender ! Error("You already have alternate addresses associated with this address.  Just send some funds to your mixer.") //limit one set of alternate addresses per primary address
         }
         case None => {
           context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses) //TODO get rid of this and set the values here
@@ -36,8 +36,12 @@ class RequestHandler extends Actor with ActorLogging {
           mixerInToAddressIn.update(s"${moa.fromAddress}_mixer$incMixer", moa.fromAddress)
           sender ! Response(
             s"""Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.
-               |Please send the funds you wish mixed to that address. Thanks
-               |NOTE:  The mixer is only able to process *integer numbers* at this time.  Sorry :(
+               |Please send the funds you wish mixed to that address.
+               |WRITE YOUR MIXER ADDRESS DOWN!  It's unique and tied to your account ONLY.
+               |
+               |NOTE:
+               |The mixer is only able to process *integer numbers*
+               |ie, (those without a decimal place) at this time.
              """.stripMargin)
         }
       }

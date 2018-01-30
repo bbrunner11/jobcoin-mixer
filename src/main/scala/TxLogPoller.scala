@@ -26,10 +26,6 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport {
 
   def processTxs = {
 
-
-    //TODO need to do proper string to number casting and error handling at some point!!!
-    //mixerInToAddressIn.update("test1", "test2")
-
     val knownAddressTxs = mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)).filter(_.balance.trim.toDouble > 0d)
       .map(x => (x.balance.toDouble, x.transactions.filter(d => {
         d.fromAddress.isDefined || mixerInToAddressIn.keySet.contains(d.toAddress)
@@ -38,6 +34,7 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport {
 
     println("no filter: " + mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)))
     println("test: " + mixerInToAddressIn.values.toList)
+
     val knownMixerHasBalance = knownAddressTxs.map { case (balance, transactions) => (balance, transactions)
 
     }
@@ -59,8 +56,10 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport {
         MixFundsOut(fromAddress, toAddress, outAddresses, balance, houseKeeps)
       }) //known address sends to a known mixer
 
+    knownMixerHasBalance.foreach { knownMixer =>
+      context.actorOf(MixerService.props()) ! knownMixer
+    }
 
-    context.actorOf(MixerService.props()) ! knownMixerHasBalance
 
   }
 
