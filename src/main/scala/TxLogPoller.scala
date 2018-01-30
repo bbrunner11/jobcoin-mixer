@@ -3,7 +3,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpUtils._
-import bb.mixer.MixerMain.{mixerInToAddressIn, addressInToMixerIn, addressInToMixerOut, primaryToLastActivity}
+import bb.mixer.MixerMain.{addressInToMixerOut, mixerInToAddressIn}
 
 object TxLogPoller {
   def props(): Props = {
@@ -30,16 +30,16 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport {
       .map(x => (x.balance.toDouble, x.transactions.filter(d => {
         d.fromAddress.isDefined || mixerInToAddressIn.keySet.contains(d.toAddress)
       }))) //either there's a fromAddress or the mixer exists
-    println("either isDefined or is a mixer: " + knownAddressTxs.mkString("\n"))
+    //println("either isDefined or is a mixer: " + knownAddressTxs.mkString("\n"))
 
-    println("no filter: " + mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)))
-    println("test: " + mixerInToAddressIn.values.toList)
+    //println("no filter: " + mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)))
+    //println("test: " + mixerInToAddressIn.values.toList)
 
     val knownMixerHasBalance = knownAddressTxs.map { case (balance, transactions) => (balance, transactions)
 
     }
       .map(tx => {
-        println("CCCCCCCCCCC :" + tx)
+        //println("CCCCCCCCCCC :" + tx)
         val balance = tx._1.toInt
 
         val (fromAddress, toAddress, outAddresses, houseKeeps) = tx._2.headOption match {

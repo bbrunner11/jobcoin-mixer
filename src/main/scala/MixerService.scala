@@ -2,8 +2,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpUtils.sendJobCoinTransaction
-import bb.mixer.MixerMain.{addressInToMixerIn, addressInToMixerOut, mixerInToAddressIn}
-import scala.util.control.Breaks._
+import bb.mixer.MixerMain.{addressInToMixerOut, mixerInToAddressIn}
 
 object MixerService {
   def props(): Props = {

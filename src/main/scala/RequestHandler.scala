@@ -3,7 +3,7 @@ package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpUtils._
-import bb.mixer.MixerMain.{mixerInToAddressIn, addressInToMixerIn, addressInToMixerOut, primaryToLastActivity}
+import bb.mixer.MixerMain.{addressInToMixerOut, mixerInToAddressIn}
 
 object RequestHandler {
   def props(): Props = {
@@ -11,13 +11,11 @@ object RequestHandler {
   }
 }
 
-case class Request(request: String)
-
+case class StatusRequest(address: String)
 case class Response(payload: String)
-
 case class Error(error: String)
 
-class RequestHandler extends Actor with ActorLogging {
+class RequestHandler extends Actor with ActorLogging with JsonSupport {
 
   var incMixer = 0 //increment int for mixer addresses
 
@@ -32,7 +30,6 @@ class RequestHandler extends Actor with ActorLogging {
           context.actorOf(MixerService.props()) ! MixerOutAddresses(moa.fromAddress, moa.addresses) //TODO get rid of this and set the values here
 
           incMixer += 1
-          addressInToMixerIn.update(moa.fromAddress, s"${moa.fromAddress}_mixer$incMixer") //increment mixer address by 1 per valid mix request TODO do we even need this anymore?
           mixerInToAddressIn.update(s"${moa.fromAddress}_mixer$incMixer", moa.fromAddress)
           sender ! Response(
             s"""Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.
@@ -64,13 +61,13 @@ class RequestHandler extends Actor with ActorLogging {
           sender ! Error(s"You have not notified the mixer service of the alternate address(es) to use in the mix.")
         }
       }
-
-
     }
-    case Request => { // TODO get rid or use as catch all?
-      println("got here")
-      sender() ! Response("ok")
+    case sr: StatusRequest =>  {
+      println(sr.address)
+      val result = getJobCoinTransactionsFor(sr.address)
+        sender ! Response(result.body)
     }
+
     case _ => println("error"); Error
 
   }

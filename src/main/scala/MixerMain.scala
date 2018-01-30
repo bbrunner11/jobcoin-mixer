@@ -20,6 +20,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val mixThis = jsonFormat3(MixFundsIn) // MixThis(String, String, String)
   implicit val transaction = jsonFormat4(Transaction)
   implicit val transactions = jsonFormat2(Transactions)
+  implicit val statReq = jsonFormat1(StatusRequest)
 }
 
 
@@ -32,7 +33,6 @@ object MixerMain extends JsonSupport {
 
   val addressInToMixerIn = TrieMap[String, String]()
   val addressInToMixerOut = TrieMap[String, Seq[String]]() //mix funds, send to these
-  val primaryToLastActivity = TrieMap[String, java.util.Date]() //TODO get rid of this?
   val mixerInToAddressIn = TrieMap[String, String]()
 
   def main(args: Array[String]): Unit = {
@@ -53,9 +53,9 @@ object MixerMain extends JsonSupport {
 
       implicit val timeout = Timeout(20.seconds)
 
-      path("api" / "health") {
-        get {
-          complete(StatusCodes.OK, "Everything is great!")
+      path("api") {
+        pathEndOrSingleSlash {
+          complete(StatusCodes.OK, "All mixers are operational.")
         }
       } ~
         path("api" / "assignmixer") {
@@ -71,7 +71,6 @@ object MixerMain extends JsonSupport {
                 case _ =>
                   complete(StatusCodes.InternalServerError)
               }
-              //TODO need a failure directive here
             }
           }
         } ~
@@ -89,25 +88,38 @@ object MixerMain extends JsonSupport {
               }
             }
           }
+        } ~
+        path("api" / "mixstatus" / Segment) { address =>
+          get {
+            onSuccess(requestHandler ? StatusRequest(address)) {
+              case response: Response => {
+                complete(StatusCodes.OK, response.payload)
+              }
+              case err: Error => {
+                complete(StatusCodes.OK, err.error)
+              }
+              case _ =>
+                complete(StatusCodes.InternalServerError)
+            }
+          }
         }
-
-
     }
+
 
     //Startup, and listen for requests
     val bindingFuture = Http().bindAndHandle(route, host, port)
 
     //set up a transaction polling schedule
-    val cancellable = system.scheduler.schedule(0 milliseconds, Duration(config.pollInterval, SECONDS)., txPoller, "poll")
+    val cancellable = system.scheduler.schedule(0 milliseconds, Duration(config.pollInterval, SECONDS), txPoller, "poll")
 
     println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
 
-      StdIn.readLine()
+    StdIn.readLine()
 
-      //Shutdown
-      bindingFuture.flatMap(_.unbind())
-      cancellable.cancel
-      system.terminate()
+    //Shutdown
+    bindingFuture.flatMap(_.unbind())
+    cancellable.cancel
+    system.terminate()
 
   }
 
