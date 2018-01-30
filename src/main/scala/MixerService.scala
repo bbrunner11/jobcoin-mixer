@@ -4,9 +4,6 @@ import akka.actor.{Actor, ActorLogging, Props}
 import bb.mixer.HttpTransactions.sendJobCoinTransaction
 import bb.mixer.MixerMain.{addressInToMixerIn, addressInToMixerOut, mixerInToAddressIn}
 import scala.util.control.Breaks._
-import bb.mixer.Configs._
-
-
 
 object MixerService {
   def props(): Props = {
@@ -18,7 +15,7 @@ object MixerService {
 case class MixFundsIn(fromAddress: String, mixerAddress: String, amount: String)
 
 case class MixFundsOut(initatingAddress: String, mixerAddress: String, outAccounts: Seq[String], amount: Double, houseKeeps: Boolean) {
-  override def toString =  s" initAddres: $initatingAddress mixerAddress: $mixerAddress outAccounts: $outAccounts txAmount: $amount houseKeeps: $houseKeeps"
+  override def toString =  s" MixFundsOut(initAddres: $initatingAddress mixerAddress: $mixerAddress outAccounts: $outAccounts txAmount: $amount houseKeeps: $houseKeeps)"
 }
 
 case class MixerOutAddresses(fromAddress: String, addresses: Seq[String])

@@ -12,7 +12,6 @@ import scala.collection.concurrent.{TrieMap}
 import scala.concurrent.duration._
 import akka.http.scaladsl.marshallers.sprayjson._
 import spray.json._
-import bb.mixer.Configs._
 
 import scala.io.StdIn
 
@@ -36,8 +35,8 @@ object MixerMain extends JsonSupport {
 
   def main(args: Array[String]): Unit = {
 
-    mixerInToAddressIn.update("house2", "anon") //TODO make this real
-    addressInToMixerOut.update("anon", List("house2")) //TODO do we need this?
+    mixerInToAddressIn.update(config.houseMixAddress, config.houseGlobalInAddress) //TODO make this real via config or soemthing
+    addressInToMixerOut.update(config.houseGlobalInAddress, Seq(config.houseMainAddress)) //TODO do we need this?
 
     implicit val system = ActorSystem("mixer")
     implicit val materializer = ActorMaterializer()
