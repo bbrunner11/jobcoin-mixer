@@ -12,7 +12,7 @@ object HttpTransactions {
     val x = Http("http://jobcoin.gemini.com/puppy/api/transactions")
       .postForm(Seq("fromAddress" -> fromAddress, "toAddress" -> toAddress, "amount" -> amount)).asString
 
-    println("HTTP Response: "+x)
+    println("HTTP Response: "+x) //TODO Need to handle reponse codes from these requests
     x
   }
 }
