@@ -2,7 +2,7 @@
 package bb.mixer
 
 import akka.actor.{Actor, ActorLogging, Props}
-import bb.mixer.HttpTransactions._
+import bb.mixer.HttpUtils._
 import bb.mixer.MixerMain.{mixerInToAddressIn, addressInToMixerIn, addressInToMixerOut, primaryToLastActivity}
 
 object RequestHandler {
@@ -32,7 +32,7 @@ class RequestHandler extends Actor with ActorLogging {
           incMixer += 1
           addressInToMixerIn.update(moa.fromAddress, s"${moa.fromAddress}_mixer$incMixer") //increment mixer address by 1 per valid mix request TODO do we even need this anymore?
           mixerInToAddressIn.update(s"${moa.fromAddress}_mixer$incMixer", moa.fromAddress)
-          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.  Please send funds to be mixed to that address. Thanks")
+          sender ! Response(s"Sent your info to the Mixer.  Your mixer address is '${moa.fromAddress}_mixer$incMixer'.  Please send funds you wish mixed to that address. Thanks")
         }
        }
     }
@@ -51,7 +51,7 @@ class RequestHandler extends Actor with ActorLogging {
           }
         }
         case None => {
-          sender ! Error(s"You have not notified the mixer of the alternate address(es) to use in the mix.")
+          sender ! Error(s"You have not notified the mixer service of the alternate address(es) to use in the mix.")
         }
       }
 

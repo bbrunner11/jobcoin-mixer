@@ -18,6 +18,8 @@ import scala.io.StdIn
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val outAccounts = jsonFormat2(MixerOutAddresses) // MixerOutAccounts[String, List[String])
   implicit val mixThis = jsonFormat3(MixFundsIn) // MixThis(String, String, String)
+  implicit val transaction = jsonFormat4(Transaction)
+  implicit val transactions = jsonFormat2(Transactions)
 }
 
 

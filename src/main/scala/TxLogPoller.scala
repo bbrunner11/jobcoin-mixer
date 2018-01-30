@@ -2,21 +2,8 @@ package bb.mixer
 
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import bb.mixer.HttpTransactions._
+import bb.mixer.HttpUtils._
 import bb.mixer.MixerMain.{mixerInToAddressIn, addressInToMixerIn, addressInToMixerOut, primaryToLastActivity}
-import spray.json._
-import java.util.Date
-import java.util.Calendar
-import java.text.SimpleDateFormat
-
-import scalaj.http.HttpResponse
-
-trait JsonSupport2 extends SprayJsonSupport with DefaultJsonProtocol {
-
-  implicit val transaction = jsonFormat4(Transaction)
-  implicit val transactions = jsonFormat2(Transactions)
-}
 
 object TxLogPoller {
   def props(): Props = {
@@ -29,14 +16,11 @@ case class Transaction(timestamp: String, fromAddress: Option[String], toAddress
 
 case class Transactions(balance: String, transactions: List[Transaction])
 
-class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
+class TxLogPoller extends Actor with ActorLogging with JsonSupport {
 
-  val now = Calendar.getInstance.getTime
-  val config = Configs
+   val config = Configs
 
-  val formatDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-
-  def receive: Receive = {
+   def receive: Receive = {
     case "poll" if (addressInToMixerOut.nonEmpty) => processTxs
   }
 
@@ -51,63 +35,33 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport2 {
         d.fromAddress.isDefined || mixerInToAddressIn.keySet.contains(d.toAddress)
       }))) //either there's a fromAddress or the mixer exists
     println("either isDefined or is a mixer: " + knownAddressTxs.mkString("\n"))
-    //    val knownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-    //      && mixerInToAddressIn.values.toList.contains(n.fromAddress.get))) //known address sends to a known mixer
+
     println("no filter: " + mixerInToAddressIn.map { case (mixAddress, fromAddress) => getJobCoinTransactionsFor(mixAddress) }.toList.map(r => parseResponse(r)))
     println("test: " + mixerInToAddressIn.values.toList)
     val knownMixerHasBalance = knownAddressTxs.map { case (balance, transactions) => (balance, transactions)
-      //.filter(n => mixerInToAddressIn.values.toList.contains(n.fromAddress.getOrElse("house2")))) //try for non-house address but if no from address, assume it is from the UI so use house mixer account (which maps to "anon")
-      //.filter(n => mixerInToAddressIn.values.toList.contains(n.fromAddress))) //get owner of anon deposite
+
     }
       .map(tx => {
         println("CCCCCCCCCCC :" + tx)
-        val balance = tx._1.toDouble
+        val balance = tx._1.toInt
 
         val (fromAddress, toAddress, outAddresses, houseKeeps) = tx._2.headOption match {
-          //case Some(fa) => (fa.fromAddress.get, tx._2.head.toAddress, false) //if this mixer belongs to someone, send the coins there otherwise send to the house
-          case Some(fa) => (config.houseGlobalInAddress, fa.toAddress, addressInToMixerOut(mixerInToAddressIn(fa.toAddress)), false)
+                case Some(fa) => {
+            val deriveFromAddress = fa.fromAddress match {
+              case Some(f) => f
+              case None => config.houseGlobalInAddress
+            }
+              (deriveFromAddress, fa.toAddress, addressInToMixerOut(mixerInToAddressIn(fa.toAddress)), false)
+          }
           case None => (config.houseGlobalInAddress, config.houseMixAddress, Seq(config.houseMainAddress), true)
         }
-
-        //val outAddresses = addressInToMixerOut.getOrElse(fromAddress, ) //safe
 
         MixFundsOut(fromAddress, toAddress, outAddresses, balance, houseKeeps)
       }) //known address sends to a known mixer
 
 
-    //
-    //    val unknownAddressTxs = allMixerTransactions.flatMap(x => x._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-    //      && !mixerInToAddressIn.values.toList.contains(n.fromAddress.get)))  // unknown address sends to known mixer
-    //
-    //    val zzz = z.map(x => (x._1, x._2._1.filter(n => mixerInToAddressIn.keySet.contains(n.toAddress)
-    //      && !mixerInToAddressIn.values.toList.contains(n.fromAddress.get))))  // unknown address sends to known mixer
-    //
-    //    val anonAddressTxs = allMixerTransactions.flatMap(_._2) //anonymous address (no fromAddress, UI initiated) sends to known mixer
-    //
-    //    val zzzz = z.map(a => (a._1, a._2._2)) //anonymous address (no fromAddress, UI initiated) sends to known mixer
-    //
-    //    val knownAddressTotals = knownAddressTxs.groupBy(_.fromAddress.get)
-    //      .map{case (k,v) => MixFundsOut(k, v.head.toAddress, addressInToMixerOut.get(k).get, v.map(_.amount.toDouble).sum, false)} //the get here is safe since we know the fromAddress
-    //
-    //    val anonAddressTotals = anonAddressTxs.map(x => MixFundsOut("anon", x.toAddress, Seq("house1"), anonAddressTxs.map(_.amount.toDouble).sum, true))
-
-
-    //val mixerTransactions = allTransactionsPerUser.flatMap(f => f.transactions.filter(ts => parseTimestamp(ts.timestamp).compareTo(now) > 0)) //only get txs since the last poll
-
-
-    //val x = (anonAddressTotals ++ knownAddressTotals).sortBy(_.houseKeeps == false)
-
     context.actorOf(MixerService.props()) ! knownMixerHasBalance
 
   }
 
-
-  def parseResponse(response: HttpResponse[String]): Transactions = {
-    response.body.parseJson.convertTo[Transactions]
-
-  }
-
-  def parseTimestamp(dateStr: String): Date = {
-    formatDate.parse(dateStr)
-  }
 }
