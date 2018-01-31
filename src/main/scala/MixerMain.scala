@@ -73,7 +73,7 @@ object MixerMain extends JsonSupport {
                |   --- the above will send your funds from fromAddress to the mixer address you specify (above, mixerIn1).
                |                            *** BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS! ***
                |
-               |You can refresh this URL http://$host:$port/api/mixstatus/mixerIn1 to see the status of your mixer (ie, balance and all transactions):
+               |You can refresh this URL http://$host:$port/api/mixstatus/mixerIn1 to see the status of your mixer (ie, balance and all transactions)
              """.stripMargin)
         }
       } ~
