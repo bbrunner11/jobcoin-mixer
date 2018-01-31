@@ -1,4 +1,4 @@
-# Jobcoin Mixer Proof of Concept
+# Altcoin Mixer Proof of Concept
 Proof of concept cryptocoin mixer using akka-http for a fake cryptocurrency called "jobcoin"
 
 
