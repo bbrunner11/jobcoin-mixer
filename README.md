@@ -27,7 +27,11 @@ Example mixing using curl:
    --- the above will response w/ the mixer address you should use for this fromAddress going forward.
  curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "mixerAddress" : "mixerIn1", "amount" : "75" }' http://$host:$port/api/mixfunds
    --- the above will send your funds from fromAddress to the mixer address you specify (above, mixerIn1).
-                  **BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS!**
+                **BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS!**
 
 You can refresh this URL http://$host:$port/api/mixstatus/mixerIn1 to see the status of your mixer (ie, balance and all transactions)
 ```
+Just to emphasize... **BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS!**
+Similar to the real world, if you send your real coins to the wrong address, they're lost!
+The service polls known mixer addresses that roll up to a known user address.  If you own it, you get the funds.  If not :(
+
