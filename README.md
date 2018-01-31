@@ -1,4 +1,4 @@
-# jobcoin-mixer
+# Jobcoin Mixer Proof of Concept
 Proof of concept cryptocoin mixer using akka-http for a fake cryptocurrency called "jobcoin"
 
 
@@ -63,3 +63,4 @@ An akka-http based REST service utilizing strongly typed messaging between the m
 * The amount you transfer into the mixer must be a valid, positive Integer.  It shouldn't be like this, I just simply ran out of time and wanted something that worked.  Because the poller is not timestamp based, past transactions to a mixer address will be pickup and processed when the service starts, assuming there is a matching in address.  This also limits the overhead of the service because it does not need to keep track of the transaction log (rolling or not), but instead tracks known mixer accounts where the balance is not 0.
 * The transaction fee only applies to transactions > $10 as determined by the random mix.  One could potentially game the mixer by transferring incremental amounts < $10 right after the poller wakes up.  This arbitrary % gets worse for the house the smaller the transfers become.  However, due to the nature of the randomness in timings of both the mixer service as well as the distribution of funds, it would take a pretty dedicated person to game it.  tl;dr It's a temporary hack to poc a transfer fee.
 * Address -> Mixer mappings as well as Address -> Outaddresses are stored as in-memory TrieMaps and as such, a server restart will lose those mappings.  However, if a known mixer address has a balance after a restart, a call to http://$host:$port/api/assignmixer with the mixer address specified will initiate the rest of the mix.  (yes, this has serious security vulnerabilities, but I have no way to keep state)
+* There is no "house account" where funds are co-mingled before being distributed.  It wouldn't be hard to implement, I just ran out of time.
