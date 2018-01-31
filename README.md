@@ -1,5 +1,5 @@
 # jobcoin-mixer
-Prood of concept cryptocoin mixer for a fake cryptocurrency called "jobcoin"
+Proof of concept cryptocoin mixer using akka-http for a fake cryptocurrency called "jobcoin"
 
 
 ## How to get started
@@ -45,9 +45,10 @@ How the mixer works:
    * The mixer charges a transaction fee per mix which will be deducted at the time of a successfl mix.
    * If the mix is unsuccessful for whatever reason, there is no transaction fee and the mixer will pick up the remaining balance the next time it runs.
 4.  Once you've sent some funds to the mixer, you can check http://$host:$port/api/mixstatus/<mixer address> to see the status of the mix.  You can continue to refresh the page to see your mixer balance decrease to 0.  Once done, you can return to https://jobcoin.gemini.com/puppy and click on your mixer address to see the transactions to your other address(es).
-
+5.  Any funds at a known mixer address that do not have a from address will be transfered to the house account.
+  * eg, If you know your mixer address is 'mixerIn1' and you use the UI to deposit funds to that account w/o first doing step 2), the house keeps those funds.  
 ## Implementation
-An akka-http based REST service utilizing strongly typed messaging between the main service, request handler, and mixer.
+An akka-http based REST service utilizing strongly typed messaging between the main service, request handler, and mixer.  Each mixer is tied to the current user and will work on that mix account until the balance is 0.
 
 *  MixerMain.scala - the main REST endpoint where the api lives.  It serves out requests to the request handler as well as initializes the scheduler which controls the transaction log poller.
 * RequestHandler.scala - Actor that handles the api requests and error handling of requests.  Responsible for checking for previous address activity, mapping addresses to out addresses, mixer address assignment, mixer instantiation, and status requests.   
@@ -62,3 +63,4 @@ An akka-http based REST service utilizing strongly typed messaging between the m
 * The amount you transfer into the mixer must be a valid, positive Integer.  It shouldn't be like this, I just simply ran out of time and wanted something that worked.
 * The transaction fee only applies to transactions > $10 as determined by the random mix.  One could potentially game the mixer by transferring incremental amounts < $10 right after the poller wakes up.  This arbitrary % gets worse for the house the smaller the transfers become.  However, due to the nature of the randomness in timings of both the mixer service as well as the distribution of funds, it would take a pretty dedicated person to game it.  tl;dr It's a temporary hack to poc a transfer fee.
 * Address -> Mixer mappings as well as Address -> OutAccounts are stored as in memory TrieMaps and as such, a server restart will lose those mappings.  However, if a known mixer account has a balance after a restart, a call to http://$host:$port/api/assignmixer with the mixer account specified will initiate the rest of the mix.  (yes, this has serious security vulnerabilities, but I have no way to keep state)
+* There is
