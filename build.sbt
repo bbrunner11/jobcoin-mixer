@@ -25,3 +25,5 @@ libraryDependencies += "com.typesafe" % "config" % "1.3.1"
 homepage := Some(url("https://github.com/bbrunner11/jobcoin-mixer"))
 
 licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+
+mainClass in (Compile, run) := Some("MixerMain")
