@@ -36,6 +36,6 @@ Similar to the real world, if you send your real coins to the wrong address, the
 The service polls known mixer addresses that roll up to a known user address.  If you own it, you get the funds.  If not :(
 
 How the mixer works:
-  1. You either fund your account or know your address balance.
-    2. You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
+1. You either fund your account or know your address balance.
+  1a. You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
 
