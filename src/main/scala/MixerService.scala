@@ -27,9 +27,7 @@ class MixerService extends Actor with ActorLogging {
   val rand1 = new scala.util.Random
 
   def receive: Receive = {
-//    case mfi: MixFundsIn => {
-//      log.debug(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
-//    }
+
     case mfo: MixFundsOut => {
       doTheMix(mfo)
     }
