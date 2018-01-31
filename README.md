@@ -44,7 +44,7 @@ How the mixer works:
    * The service will transfer your funds from your address to the mixer address you specified, and mix them to the out addresses you specified.  The mixer is both random in its mix timing, which addresses of yours it sends to, as well as the timing in which it sends to the mix addresses,
    * The mixer charges a transaction fee per mix which will be deducted at the time of a successfl mix.
    * If the mix is unsuccessful for whatever reason, there is no transaction fee and the mixer will pick up the remaining balance the next time it runs.
-4.  Once you've sent some funds to the mixer, you can check http://$host:$port/api/mixstatus/<mixer address> to see the status of the mix.  You can continue to refresh the page to see your mixer balance decrease to 0.  Once done, you can return to https://jobcoin.gemini.com/puppy and click on your mixer address to see the transactions to your other address(es).
+4.  Once you've sent some funds to the mixer, you can check http://$host:$port/api/mixstatus/mixerAaddress to see the status of the mix.  You can continue to refresh the page to see your mixer balance decrease to 0.  Once done, you can return to https://jobcoin.gemini.com/puppy and click on your mixer address to see the transactions to your other address(es).
 5.  Any funds at a known mixer address that do not have a from address will be transfered to the house address.
      * eg, If you know your mixer address is 'mixerIn1' and you use the UI to deposit funds to that address w/o first doing step 2), the house keeps those funds.  
 ## Implementation
