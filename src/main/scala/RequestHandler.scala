@@ -49,19 +49,29 @@ class RequestHandler extends Actor with ActorLogging with JsonSupport {
     case mt: MixFundsIn => {
       addressInToMixerOut.get(mt.fromAddress) match { //check that the user has notified mixer of out addresses
         case Some(_) => {
-          sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
-            case r if (r.code) == 200 => {
-             // context.actorOf(MixerService.props()) ! MixFundsIn(mt.fromAddress, mt.mixerAddress, mt.amount) //TODO get rid of this, the poller will pick up the transaction
-              sender ! Response(s"Sent your info to the Mixer. Your mix will be started momentarily. Thanks")
+          if (mt.amount.contains(("."))) {
+            sender ! Response(
+              s"""Sorry, in its current state the mixer only supports integer values.
+                 |You may resend your mix request in multiple batches, just make sure the amounts do not contain a
+                 |decimal point and your account has the necessary funds for the multiple requests.
+                 |Sorry for the inconvenience.
+               """.stripMargin)
+          } else {
+            sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
+              case r if (r.code) == 200 => {
+                // context.actorOf(MixerService.props()) ! MixFundsIn(mt.fromAddress, mt.mixerAddress, mt.amount) //TODO get rid of this, the poller will pick up the transaction
+                sender ! Response(s"Sent your info to the Mixer. Your mix will be started momentarily. Thanks")
+              }
+              case r if (r.code) == 422 => {
+                sender ! Error(s" Error. Insufficient funds in account ${mt.fromAddress}. Unable to transfer to the mixer.")
+              }
+              case _ => sender ! Error("Something went wrong.")
             }
-            case r if (r.code) == 422 => {
-              sender ! Error(s" Error. Insufficient funds in account ${mt.fromAddress}. Unable to transfer to the mixer.")
-            }
-            case _ => sender ! Error("Something went wrong.")
           }
         }
         case None => {
           sender ! Error(s"You have not notified the mixer service of the alternate address(es) to use in the mix.")
+
         }
       }
     }
