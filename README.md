@@ -48,5 +48,5 @@ How the mixer works:
     
 ## Design limitations
 * The amount you transfer into the mixer must be a valid, positive Integer.  It shouldn't be like this, I just simply ran out of time and wanted something that worked.
-* The transaction fee only applies to transactions > $10 as determined by the random mix.One could potentially game the mixer by transferring incremental amounts < $10 right after the poller wakes up.  This arbitrary % gets worse for the house the smaller the transfers become.  However, due to the nature of the randomness in timings of both the mixer service as well as the distribution of funds, it would take a pretty dedicated person to game it.
+* The transaction fee only applies to transactions > $10 as determined by the random mix.  One could potentially game the mixer by transferring incremental amounts < $10 right after the poller wakes up.  This arbitrary % gets worse for the house the smaller the transfers become.  However, due to the nature of the randomness in timings of both the mixer service as well as the distribution of funds, it would take a pretty dedicated person to game it.  tl;dr It's a temporary hack to poc a transfer fee.
 	
