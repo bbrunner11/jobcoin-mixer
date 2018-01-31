@@ -50,7 +50,7 @@ How the mixer works:
 ## Implementation
 An akka-http based REST service utilizing strongly typed messaging between the main service, request handler, and mixer.  Each mixer is tied to the current user and will work on that mix address until the balance is 0.
 
-*  MixerMain.scala - the main REST endpoint where the api lives.  It serves out requests to the request handler as well as initializes the scheduler which controls the transaction log poller.
+* MixerMain.scala - the main REST endpoint where the api lives.  It serves out requests to the request handler as well as initializes the scheduler which controls the transaction log poller.
 * RequestHandler.scala - Actor that handles the api requests and error handling of requests.  Responsible for checking for previous address activity, mapping addresses to out addresses, mixer address assignment, mixer instantiation, and status requests.   
 * MixerService.scala - Actor responsible for splitting up funds, calculating transaction costs, and distributing funds to proper mixer out addresses.
 * TxLogPoller.scala - Actor responsible for monitoring known mixer address, determining who owns the address, and sending transactions to the MixerService.
