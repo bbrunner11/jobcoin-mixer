@@ -38,7 +38,7 @@ The service polls known mixer addresses that roll up to a known user address.  I
 How the mixer works:
 1. You either fund your address via https://jobcoin.gemini.com/puppy or know your address and balance.
 2. You tell the mixer service who you are via address, as well which alternate address you own that you want mixed out.  **NOTE: You only get to do this once per primary address.  The mixers do not support adding additional alternate addresses at this time.**
-   * The mixer will return a valid mixer address that is tied to the address you specified in step 
+   * The mixer will return a valid mixer address that is tied to the address you specified in step 2 above.
    * Any funds from now on that go to that address will end up in your alternate address.
 3.  You specify your address, your mixer address, and how much of your balance you want to mix.
    * The service will transfer your funds from your address to the mixer address you specified, and mix them to the out addresses you specified.  The mixer is both random in its mix timing, which addresses of yours it sends to, as well as the timing in which it sends to the mix addresses,
