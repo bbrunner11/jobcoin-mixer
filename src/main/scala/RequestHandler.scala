@@ -76,7 +76,7 @@ class RequestHandler extends Actor with ActorLogging with JsonSupport {
 
   private def storeOutAccounts(moa: MixerOutAddresses): Unit = {
     addressInToMixerOut.getOrElseUpdate(moa.fromAddress, moa.addresses) //right now, 1 unique address is assigned to a predefined set of out addresses
-    log.info(addressInToMixerOut.toString)
+    //log.info(addressInToMixerOut.toString)
   }
 
 }
