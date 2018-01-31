@@ -37,6 +37,6 @@ The service polls known mixer addresses that roll up to a known user address.  I
 
 How the mixer works:
 
-1) You either fund your account or know your address balance.
-  2) You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
+1. You either fund your account or know your address balance.
+  2. You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
 a) 
