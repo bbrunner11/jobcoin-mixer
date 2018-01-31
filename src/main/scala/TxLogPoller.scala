@@ -9,7 +9,6 @@ object TxLogPoller {
   def props(): Props = {
     Props(classOf[TxLogPoller])
   }
-
 }
 
 case class Transaction(timestamp: String, fromAddress: Option[String], toAddress: String, amount: String)
@@ -47,7 +46,6 @@ class TxLogPoller extends Actor with ActorLogging with JsonSupport {
           }
           case None => (config.houseGlobalInAddress, config.houseMixAddress, Seq(config.houseMainAddress), true)
         }
-
         MixFundsOut(fromAddress, toAddress, outAddresses, balance, houseKeeps)
       }) //known address sends to a known mixer
 

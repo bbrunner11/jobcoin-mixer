@@ -59,6 +59,7 @@ object MixerMain extends JsonSupport {
             s"""All mixers are operational.
                |
                |How to use:
+               | First you need to fund your address:  Use https://jobcoin.gemini.com/puppy
                |
                | To be assigned a mixer use this URL: http://$host:$port/api/assignmixer
                | To start a mixing session use this URL: http://$host:$port/api/mixfunds

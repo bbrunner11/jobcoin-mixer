@@ -27,16 +27,19 @@ class MixerService extends Actor with ActorLogging {
   val rand1 = new scala.util.Random
 
   def receive: Receive = {
-    case mfi: MixFundsIn => {
-      log.debug(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
-    }
+//    case mfi: MixFundsIn => {
+//      log.debug(s"\nPrimary Account: ${mfi.fromAddress}\n\tMixerAddress: ${mfi.mixerAddress}\n\tAmount: ${mfi.amount}\n$mixerInToAddressIn")
+//    }
     case mfo: MixFundsOut => {
       doTheMix(mfo)
     }
     case _ => log.info("Akka sender not sending a valid message.")
   }
 
-
+  /**
+    *
+    * @param mtf MixFundsOut(initatingAddress: String, mixerAddress: String, outAddresses: Seq[String], amount: Int, houseKeeps: Boolean)
+    */
   private def doTheMix(mtf: MixFundsOut): Unit = {
 
     val txBuckets = 5 + rand1.nextInt(10) //split the amount into this many buckets(base + some random Int to 10
@@ -49,8 +52,7 @@ class MixerService extends Actor with ActorLogging {
       * Only if the transaction to the out account is successful does the house take the vig
       * Otherwise the failed balance with vig intact stays in the mixer account and will get picked up by the next poller
       */
-
-    val splitAmount = randSum(txBuckets, 0, amount).filter(_ != 0)
+    val splitAmount = randSum(txBuckets, amount).filter(_ != 0)
 
     splitAmount.foreach(randAmt => {
       val out = rand1.nextInt(addressesOut.size)
@@ -69,27 +71,32 @@ class MixerService extends Actor with ActorLogging {
 println(s"***** Finished mixing funds for mixer ${mtf.mixerAddress} *****")
   }
 
-  private def randSum(n: Int, min: Int, m: Int): List[Int] = { //TODO refactor this crap
+  /** Reused from random internet java, this works but can be refactored to be more functional (I ran out if time)
+    *
+    * @param n the number of buckets
+    * @param m upper boud of the random distribution.  Should be the transfer amount in this case
+    * @return List of n integers that add up to m
+    */
+  private def randSum(n: Int, m: Int): List[Int] = { //TODO refactor this crap
     val rand = scala.util.Random
 
-    val max = m - min * n
     val nums = new scala.collection.mutable.ListBuffer[Int]
 
     nums ++= nums.padTo(n, 0)
 
-    if (max <= 0) throw new IllegalArgumentException
+    if (m <= 0) throw new IllegalArgumentException
 
-    for (i <- 1 until n - 1) {
-      nums(i) = rand.nextInt(max)
+    for (i <- 1 until nums.length) {
+      nums(i) = rand.nextInt(m)
     }
 
     val sorted = nums.sorted
 
     for (i <- 1 until sorted.length) {
-      sorted(i - 1) = sorted(i) - sorted(i - 1) + min
+      sorted(i - 1) = sorted(i) - sorted(i - 1)
     }
 
-    sorted(n - 1) = max - sorted(n - 1) + min
+    sorted(n - 1) = m - sorted(n - 1)
 
     sorted.toList
   }

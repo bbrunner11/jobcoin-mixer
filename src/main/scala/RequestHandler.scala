@@ -51,7 +51,7 @@ class RequestHandler extends Actor with ActorLogging with JsonSupport {
         case Some(_) => {
           sendJobCoinTransaction(mt.fromAddress, mt.mixerAddress, mt.amount) match { //send to Gemini API @ mixer address
             case r if (r.code) == 200 => {
-              context.actorOf(MixerService.props()) ! MixFundsIn(mt.fromAddress, mt.mixerAddress, mt.amount) //TODO get rid of this, the poller will pick up the transaction
+             // context.actorOf(MixerService.props()) ! MixFundsIn(mt.fromAddress, mt.mixerAddress, mt.amount) //TODO get rid of this, the poller will pick up the transaction
               sender ! Response(s"Sent your info to the Mixer. Your mix will be started momentarily. Thanks")
             }
             case r if (r.code) == 422 => {
