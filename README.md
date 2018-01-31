@@ -36,7 +36,7 @@ Similar to the real world, if you send your real coins to the wrong address, the
 The service polls known mixer addresses that roll up to a known user address.  If you own it, you get the funds.  If not :(
 
 How the mixer works:
-1. You either fund your account via https://jobcoin.gemini.com/puppy or know your address there as well as balance.
+1. You either fund your account via https://jobcoin.gemini.com/puppy or know your address and balance.
 2. You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed out.  **NOTE: You only get to do this once per primary address.  The mixers do not support adding additional alternate accounts at this time.**
    2. The mixer will return a valid mixer address that is tied to the address you specified in step 2.  Any funds from now on that go to that address will end up in your alternate accounts.
 3.  You specify your address, your mixer address, and how much of your balance you want to mix.
