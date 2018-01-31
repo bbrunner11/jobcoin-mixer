@@ -23,10 +23,10 @@ How to use:
 
 Example mixing using curl:
 
- curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "addresses" : ["alt1", "alt2", "alt3"] }' http://$host:$port/api/assignmixer
-   --- the above will response w/ the mixer address you should use for this fromAddress going forward.
+curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "addresses" : ["alt1", "alt2", "alt3"] }' http://$host:$port/api/assignmixer
+   * the above will response w/ the mixer address you should use for this fromAddress going forward.
  curl -H "Content-Type: application/json" -d '{ "fromAddress" : "MyAddress", "mixerAddress" : "mixerIn1", "amount" : "75" }' http://$host:$port/api/mixfunds
-   --- the above will send your funds from fromAddress to the mixer address you specify (above, mixerIn1).
+   * the above will send your funds from fromAddress to the mixer address you specify (above, mixerIn1).
                 **BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YOUR FUNDS!**
 
 You can refresh this URL http://$host:$port/api/mixstatus/mixerIn1 to see the status of your mixer (ie, balance and all transactions)
@@ -37,6 +37,6 @@ The service polls known mixer addresses that roll up to a known user address.  I
 
 How the mixer works:
 
-1. You either fund your account or know your address balance.
-    2. You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
-a) 
+  1. You either fund your account or know your address balance.
+     2. You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
+
