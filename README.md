@@ -9,7 +9,7 @@ POC cryptocoin mixer for a fake cryptocurrency called jobcoin
   cd jobcoin-mixer
   sbt run
 ```
-The above will start the jobcoin mixer service.  However, before you do anything, you need to fund your dummy account with funds.  You can do that by going here https://jobcoin.gemini.com/puppy and using the "Create 50 New Jobcoins" option, pointing it to your dummy address.  Once that is done, you can proceed.
+The above will start the jobcoin mixer service.  However, before you do anything, **you need to fund your dummy account with funds**.  You can do that by going here https://jobcoin.gemini.com/puppy and using the "Create 50 New Jobcoins" option, pointing it to your dummy address.  Once that is done, you can proceed.
 
 Once set up a get request to: http://$host:$port/api will return usage instructions:
 ```All mixers are operational.
@@ -35,3 +35,8 @@ Just to emphasize... **BE CERTAIN THE MIXER ADDRESS IS CORRECT OR YOU FORFEIT YO
 Similar to the real world, if you send your real coins to the wrong address, they're lost!
 The service polls known mixer addresses that roll up to a known user address.  If you own it, you get the funds.  If not :(
 
+How the mixer works:
+
+1) You either fund your account or know your address balance.
+  2) You tell the mixer service who you are via address, as well which alternate accounts you own that you want mixed in.
+a) 
