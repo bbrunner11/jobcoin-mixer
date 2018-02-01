@@ -45,8 +45,7 @@ How the mixer works:
    * The mixer charges a transaction fee per mix which will be deducted at the time of a successfl mix.
    * If the mix is unsuccessful for whatever reason, there is no transaction fee and the mixer will pick up the remaining balance the next time it runs.
 4.  Once you've sent some funds to the mixer, you can check http://$host:$port/api/mixstatus/mixerAaddress to see the status of the mix.  You can continue to refresh the page to see your mixer balance decrease to 0.  Once done, you can return to https://jobcoin.gemini.com/puppy and click on your mixer address to see the transactions to your other address(es).
-5.  Any funds at a known mixer address that do not have a from address will be transfered to the house address.
-     * eg, If you know your mixer address is 'mixerIn1' and you use the UI to deposit funds to that address w/o first doing step 2), the house keeps those funds.  
+5.  Any funds at a known mixer address that does not have a fromAddress (step 2) will stay at that mixer until you initiate step 2.
 ## Implementation
 An akka-http based REST service utilizing strongly typed messaging between the main service, request handler, and mixer.  Each mixer is tied to the current user and will work on that mix address until the balance is 0.
 
@@ -60,7 +59,8 @@ An akka-http based REST service utilizing strongly typed messaging between the m
 
 
 ## Design limitations
-* The amount you transfer into the mixer must be a valid, positive Integer.  It shouldn't be like this, I just simply ran out of time and wanted something that worked.  Because the poller is not timestamp based, past transactions to a mixer address will be picked up and processed when the service starts, assuming there is a matching 'in' address.  This also limits the overhead of the service because it does not need to keep track of the transaction log (rolling or not), but instead tracks known mixer accounts where the balance is not 0.
+* The amount you transfer into the mixer must be a valid, **positive Integer**.  It won't allow anything else. It shouldn't be like this, I just simply ran out of time and wanted something that worked.  Because the poller is not timestamp based, past transactions to a mixer address will be picked up and processed when the service starts, assuming there is a matching 'in' address.  This also limits the overhead of the service because it does not need to keep track of the transaction log (rolling or not), but instead tracks known mixer accounts where the balance is not 0.
+* Funds sent to a an address that is not initiated by a call to /assignmixer will remain there indefinitely until a matching mixer address is initialized.  Since ideally mixer addresses will be uniquely identified by fromAddress, this is probably fine since they are arbitrary addresses due to the nature of the blockchain... ie, the poller should not pick these up for the house account since they're technically not theirs, even if the address was previously a known mixer address.  
 * The transaction fee only applies to transactions > $10 as determined by the random mix.  One could potentially game the mixer by transferring incremental amounts < $10 right after the poller wakes up.  This arbitrary % gets worse for the house the smaller the transfers become.  However, due to the nature of the randomness in timings of both the mixer service as well as the distribution of funds, it would take a pretty dedicated person to game it.  
   tl;dr It's a temporary hack to display how a transaction fee might work.
 * Address -> Mixer mappings as well as Address -> Outaddresses are stored as in-memory TrieMaps and as such, a server restart will lose those mappings.  However, if a known mixer address has a balance after a restart, a call to http://$host:$port/api/assignmixer with the mixer address specified will initiate the rest of the mix.  (yes, this has serious security vulnerabilities, but I have no way to keep state)
