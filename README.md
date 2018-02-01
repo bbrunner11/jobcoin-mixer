@@ -58,7 +58,7 @@ An akka-http based REST service utilizing strongly typed messaging between the m
 * application.conf - app specific configuration such as host, port, pollInterval, etc.
 
 
-## Design limitations
+## Design caveats/limitations
 * The amount you transfer into the mixer must be a valid, **positive Integer**.  It won't allow anything else. It shouldn't be like this, I just simply ran out of time and wanted something that worked.  Because the poller is not timestamp based, past transactions to a mixer address will be picked up and processed when the service starts, assuming there is a matching 'in' address.  This also limits the overhead of the service because it does not need to keep track of the transaction log (rolling or not), but instead tracks known mixer accounts where the balance is not 0.
 * Funds sent to a an address that is not initiated by a call to /assignmixer will remain there indefinitely until a matching mixer address is initialized.  Since ideally mixer addresses will be uniquely identified by fromAddress, this is probably fine since they are arbitrary addresses due to the nature of the blockchain... ie, the poller should not pick these up for the house account since they're technically not theirs, even if the address was previously a known mixer address.  
 * The transaction fee only applies to transactions > $10 as determined by the random mix.  One could potentially game the mixer by transferring incremental amounts < $10 right after the poller wakes up.  This arbitrary % gets worse for the house the smaller the transfers become.  However, due to the nature of the randomness in timings of both the mixer service as well as the distribution of funds, it would take a pretty dedicated person to game it.  
